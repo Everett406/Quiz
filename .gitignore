@@ -25,3 +25,13 @@ build/
 # Sensitive
 *token*
 *secret*
+
+# Android
+.gradle/
+local.properties
+*.apk
+*.aab
+*.dex
+*.keystore
+!gradle-wrapper.jar
+/app/release/
