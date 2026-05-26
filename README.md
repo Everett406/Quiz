@@ -6,7 +6,7 @@
 
 ## 📖 项目概述
 
-Tiku 是一个由学生团队协作开发的题库管理应用。项目 fork 自 [At210Co60/Quiz](https://github.com/At210Co60/Quiz)，在此基础上进行功能迭代与定制开发。
+Tiku 是一个由学生团队协作开发的题库管理应用。
 
 我们的目标是打造一个**简洁、高效、易用**的刷题工具，帮助同学们更好地管理和练习各类题目。
 
@@ -246,36 +246,11 @@ View (Composable Screen)
 
 ---
 
-## 🤝 协作规范
 
-### Git 工作流
-
-- **主分支**：`main` — 稳定版本，受保护
-- **开发分支**：`dev` — 日常开发合并目标
-- **功能分支**：`feature/xxx` — 单个功能开发
-- **修复分支**：`fix/xxx` — Bug 修复
-
-### Commit 规范
-
-遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
-
-```
-<type>(<scope>): <description>
-
-type: feat | fix | docs | style | refactor | perf | test | chore
-scope: ui | data | nav | build | ...
-```
-
-示例：
-```
-feat(ui): add quiz practice screen
-fix(data): correct question model nullable fields
-docs: update README with M3E design guidelines
-```
 
 ### Code Review
 
-- 所有合并到 `dev` / `main` 的代码需经过 Review
+- 所有合并到 `main` 的代码需经过 Review
 - 关注点：代码质量、架构一致性、M3E 设计规范遵循、性能影响
 
 ---
@@ -290,4 +265,3 @@ docs: update README with M3E design guidelines
 
 ## 📄 许可证
 
-本项目基于原项目 [At210Co60/Quiz](https://github.com/At210Co60/Quiz) 进行开发，具体许可证请参阅原项目。
