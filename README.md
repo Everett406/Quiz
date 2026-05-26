@@ -127,11 +127,15 @@ Quiz/
 │       │           └── Type.kt             # 字体排版定义
 │       └── res/
 │           └── values/                     # 资源文件
+├── .github/
+│   └── workflows/
+│       └── build-release.yml               # CI/CD 自动构建 & 发布
 ├── gradle/
 │   └── libs.versions.toml                  # 版本目录 (Version Catalog)
 ├── build.gradle.kts                        # 根级构建配置
 ├── settings.gradle.kts                     # 项目设置
 ├── gradle.properties                       # Gradle 属性
+├── LICENSE                                 # MIT 许可证
 └── .gitignore
 ```
 
@@ -246,7 +250,41 @@ View (Composable Screen)
 
 ---
 
+## ⚙️ CI/CD 工作流
 
+本项目使用 **GitHub Actions** 实现自动化构建与发布流程。
+
+### 工作方式
+
+1. **AI 辅助开发**：项目代码通过 AI 辅助编写，AI 将代码直接推送到本仓库
+2. **自动触发构建**：当代码推送到 `main` 分支时，GitHub Actions 自动触发 APK 构建工作流
+3. **自动发布 Release**：构建成功后，自动创建 GitHub Release 并上传 APK 安装包
+
+### 工作流配置
+
+工作流文件位于 `.github/workflows/build-release.yml`，主要流程：
+
+```
+代码推送至 main 分支
+    → GitHub Actions 自动触发
+    → 检出代码 & 配置 JDK 环境
+    → Gradle 构建 Debug APK
+    → 构建成功 → 创建 GitHub Release
+    → 上传 APK 到 Release Assets
+```
+
+### 版本管理
+
+- 版本号定义在 `app/build.gradle.kts` 的 `versionCode` 和 `versionName` 中
+- 每次功能更新或 Bug 修复时，需同步更新版本号
+- 版本号更新时，需同步更新 README 的「版本历史」章节以及应用内的关于页面
+
+### 注意事项
+
+- 构建完成后需等待一段时间，再通过 API 或 GitHub 界面确认构建状态
+- Release 标签与 `versionName` 保持一致（如 `v1.0.0`）
+
+---
 
 ### Code Review
 
@@ -264,4 +302,8 @@ View (Composable Screen)
 ---
 
 ## 📄 许可证
+
+本项目基于 [MIT License](LICENSE) 开源。
+
+Copyright (c) 2026 Everett406
 
