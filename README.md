@@ -1,8 +1,8 @@
 # Tiku（题库）
 
-<div align="center">
-  <img src="docs/app-icon-preview.png" width="200" alt="Tiku 应用图标" style="border-radius: 25%;" />
-</div>
+<p align="center">
+  <img src="docs/app-icon-preview.png" width="200" alt="Tiku 应用图标" />
+</p>
 
 > 一款面向学生的 Android 刷题应用，支持在线刷题、模拟考试、错题记录与学习统计。
 
