@@ -28,6 +28,16 @@ class QuizViewModel(
     private val _isAnswered = MutableStateFlow(false)
     val isAnswered: StateFlow<Boolean> = _isAnswered.asStateFlow()
 
+    // Track quiz completion and statistics
+    private val _quizCompleted = MutableStateFlow(false)
+    val quizCompleted: StateFlow<Boolean> = _quizCompleted.asStateFlow()
+
+    private val _correctCount = MutableStateFlow(0)
+    val correctCount: StateFlow<Int> = _correctCount.asStateFlow()
+
+    private val _totalAnswered = MutableStateFlow(0)
+    val totalAnswered: StateFlow<Int> = _totalAnswered.asStateFlow()
+
     // Load questions based on mode and bankId
     private val questionsFlow = when (mode) {
         "random", "exam" -> repository.getRandomQuestionsByBank(bankId, 20)
@@ -55,6 +65,12 @@ class QuizViewModel(
         if (_isAnswered.value) return
         _selectedAnswer.value = answer
         _isAnswered.value = true
+
+        // Update statistics
+        _totalAnswered.value++
+        if (isCorrect()) {
+            _correctCount.value++
+        }
     }
 
     fun nextQuestion() {
@@ -62,6 +78,9 @@ class QuizViewModel(
             _currentIndex.value++
             _selectedAnswer.value = null
             _isAnswered.value = false
+        } else {
+            // Already at last question, finish quiz
+            _quizCompleted.value = true
         }
     }
 
@@ -73,10 +92,17 @@ class QuizViewModel(
         }
     }
 
+    fun finishQuiz() {
+        _quizCompleted.value = true
+    }
+
     fun resetQuiz() {
         _currentIndex.value = 0
         _selectedAnswer.value = null
         _isAnswered.value = false
+        _quizCompleted.value = false
+        _correctCount.value = 0
+        _totalAnswered.value = 0
     }
 
     fun isCorrect(): Boolean {

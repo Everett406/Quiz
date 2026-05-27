@@ -21,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -62,6 +63,9 @@ fun QuizPracticeScreen(
     val selectedAnswer by viewModel.selectedAnswer.collectAsState()
     val isAnswered by viewModel.isAnswered.collectAsState()
     val isLastQuestion by viewModel.isLastQuestion.collectAsState()
+    val quizCompleted by viewModel.quizCompleted.collectAsState()
+    val correctCount by viewModel.correctCount.collectAsState()
+    val totalAnswered by viewModel.totalAnswered.collectAsState()
 
     // Record answer when answered
     LaunchedEffect(isAnswered, selectedAnswer, currentQuestion) {
@@ -73,6 +77,14 @@ fun QuizPracticeScreen(
                 isCorrect = viewModel.isCorrect(),
                 practiceMode = mode,
             )
+        }
+    }
+
+    // Auto advance to next question after a short delay
+    LaunchedEffect(isAnswered) {
+        if (isAnswered && !isLastQuestion && !quizCompleted) {
+            kotlinx.coroutines.delay(1500) // 1.5秒后自动进入下一题
+            viewModel.nextQuestion()
         }
     }
 
@@ -95,260 +107,355 @@ fun QuizPracticeScreen(
             )
         },
     ) { padding ->
-        if (currentQuestion == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (totalQuestions == 0) {
-                    Text("暂无题目，请先导入题库", style = MaterialTheme.typography.bodyLarge)
-                } else {
-                    Text("加载中...", style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                // Progress indicator
-                Text(
-                    text = "${currentIndex + 1} / $totalQuestions",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
+        when {
+            quizCompleted -> {
+                // Show completion screen
+                QuizCompletedScreen(
+                    correctCount = correctCount,
+                    totalAnswered = totalAnswered,
+                    onRestart = { viewModel.resetQuiz() },
+                    onBack = onBack,
+                    modifier = Modifier.padding(padding),
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Linear progress bar (simple colored bar)
+            }
+            currentQuestion == null -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(2.dp),
-                        )
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(
-                                fraction = if (totalQuestions > 0) (currentIndex + 1).toFloat() / totalQuestions else 0f
-                            )
-                            .height(4.dp)
-                            .then(
-                                if (isAnswered) Modifier.border(
-                                    width = 1.dp,
-                                    color = if (viewModel.isCorrect()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                    shape = RoundedCornerShape(2.dp),
-                                ) else Modifier
-                            )
+                    if (totalQuestions == 0) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("暂无题目，请先导入题库", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = onBack) {
+                                Text("返回")
+                            }
+                        }
+                    } else {
+                        Text("加载中...", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    // Progress indicator
+                    Text(
+                        text = "${currentIndex + 1} / $totalQuestions",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
                     )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // Question type badge
-                val typeLabel = when (currentQuestion!!.type) {
-                    QuestionType.SINGLE_CHOICE -> "单选题"
-                    QuestionType.MULTI_CHOICE -> "多选题"
-                    QuestionType.TRUE_FALSE -> "判断题"
-                    QuestionType.SHORT_ANSWER -> "简答题"
-                }
-                Text(
-                    text = typeLabel,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                    LinearProgressIndicator(
+                        progress = { if (totalQuestions > 0) (currentIndex + 1).toFloat() / totalQuestions else 0f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // Question title
-                Text(
-                    text = currentQuestion!!.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Answer options based on question type
-                when (currentQuestion!!.type) {
-                    QuestionType.SINGLE_CHOICE -> {
-                        currentQuestion!!.options.forEach { option ->
-                            OptionCard(
-                                text = option,
-                                isSelected = selectedAnswer == option,
-                                isCorrect = isAnswered && option == currentQuestion!!.answer,
-                                isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
-                                isEnabled = !isAnswered,
-                                onClick = { viewModel.selectAnswer(option) },
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                    // Question type badge
+                    val typeLabel = when (currentQuestion!!.type) {
+                        QuestionType.SINGLE_CHOICE -> "单选题"
+                        QuestionType.MULTI_CHOICE -> "多选题"
+                        QuestionType.TRUE_FALSE -> "判断题"
+                        QuestionType.SHORT_ANSWER -> "简答题"
                     }
-                    QuestionType.MULTI_CHOICE -> {
-                        currentQuestion!!.options.forEach { option ->
-                            OptionCard(
-                                text = option,
-                                isSelected = selectedAnswer == option,
-                                isCorrect = isAnswered && option == currentQuestion!!.answer,
-                                isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
-                                isEnabled = !isAnswered,
-                                onClick = { viewModel.selectAnswer(option) },
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = typeLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Question title
+                    Text(
+                        text = currentQuestion!!.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Answer options based on question type
+                    when (currentQuestion!!.type) {
+                        QuestionType.SINGLE_CHOICE -> {
+                            currentQuestion!!.options.forEach { option ->
+                                OptionCard(
+                                    text = option,
+                                    isSelected = selectedAnswer == option,
+                                    isCorrect = isAnswered && option == currentQuestion!!.answer,
+                                    isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
+                                    isEnabled = !isAnswered,
+                                    onClick = { viewModel.selectAnswer(option) },
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
-                    }
-                    QuestionType.TRUE_FALSE -> {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            OptionCard(
-                                text = "正确",
-                                isSelected = selectedAnswer == "true",
-                                isCorrect = isAnswered && currentQuestion!!.answer.equals("true", ignoreCase = true) && selectedAnswer == "true",
-                                isWrong = isAnswered && selectedAnswer == "true" && !currentQuestion!!.answer.equals("true", ignoreCase = true),
-                                isEnabled = !isAnswered,
-                                onClick = { viewModel.selectAnswer("true") },
-                                modifier = Modifier.weight(1f),
-                            )
-                            OptionCard(
-                                text = "错误",
-                                isSelected = selectedAnswer == "false",
-                                isCorrect = isAnswered && currentQuestion!!.answer.equals("false", ignoreCase = true) && selectedAnswer == "false",
-                                isWrong = isAnswered && selectedAnswer == "false" && !currentQuestion!!.answer.equals("false", ignoreCase = true),
-                                isEnabled = !isAnswered,
-                                onClick = { viewModel.selectAnswer("false") },
-                                modifier = Modifier.weight(1f),
-                            )
+                        QuestionType.MULTI_CHOICE -> {
+                            currentQuestion!!.options.forEach { option ->
+                                OptionCard(
+                                    text = option,
+                                    isSelected = selectedAnswer == option,
+                                    isCorrect = isAnswered && option == currentQuestion!!.answer,
+                                    isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
+                                    isEnabled = !isAnswered,
+                                    onClick = { viewModel.selectAnswer(option) },
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
-                    }
-                    QuestionType.SHORT_ANSWER -> {
-                        var inputText by remember { mutableStateOf("") }
-                        OutlinedTextField(
-                            value = inputText,
-                            onValueChange = { if (!isAnswered) inputText = it },
-                            label = { Text("请输入答案") },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isAnswered,
-                            singleLine = true,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        if (!isAnswered) {
-                            Button(
-                                onClick = { viewModel.selectAnswer(inputText) },
-                                enabled = inputText.isNotBlank(),
+                        QuestionType.TRUE_FALSE -> {
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                Text("提交答案")
+                                OptionCard(
+                                    text = "正确",
+                                    isSelected = selectedAnswer == "true",
+                                    isCorrect = isAnswered && currentQuestion!!.answer.equals("true", ignoreCase = true) && selectedAnswer == "true",
+                                    isWrong = isAnswered && selectedAnswer == "true" && !currentQuestion!!.answer.equals("true", ignoreCase = true),
+                                    isEnabled = !isAnswered,
+                                    onClick = { viewModel.selectAnswer("true") },
+                                    modifier = Modifier.weight(1f),
+                                )
+                                OptionCard(
+                                    text = "错误",
+                                    isSelected = selectedAnswer == "false",
+                                    isCorrect = isAnswered && currentQuestion!!.answer.equals("false", ignoreCase = true) && selectedAnswer == "false",
+                                    isWrong = isAnswered && selectedAnswer == "false" && !currentQuestion!!.answer.equals("false", ignoreCase = true),
+                                    isEnabled = !isAnswered,
+                                    onClick = { viewModel.selectAnswer("false") },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                        QuestionType.SHORT_ANSWER -> {
+                            var inputText by remember { mutableStateOf("") }
+                            OutlinedTextField(
+                                value = inputText,
+                                onValueChange = { if (!isAnswered) inputText = it },
+                                label = { Text("请输入答案") },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !isAnswered,
+                                singleLine = true,
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            if (!isAnswered) {
+                                Button(
+                                    onClick = { viewModel.selectAnswer(inputText) },
+                                    enabled = inputText.isNotBlank(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("提交答案")
+                                }
                             }
                         }
                     }
-                }
 
-                // Answer feedback
-                if (isAnswered) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    val isCorrect = viewModel.isCorrect()
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isCorrect)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.errorContainer,
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = if (isCorrect) "✓ 回答正确" else "✗ 回答错误",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (isCorrect)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onErrorContainer,
-                            )
-                            Text(
-                                text = "正确答案：${currentQuestion!!.answer}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(top = 4.dp),
-                                color = if (isCorrect)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onErrorContainer,
-                            )
-                        }
-                    }
-
-                    // Explanation
-                    if (currentQuestion!!.explanation.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                    // Answer feedback (only show when answered)
+                    if (isAnswered) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        val isCorrect = viewModel.isCorrect()
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                containerColor = if (isCorrect)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.errorContainer,
                             ),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "解析",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = if (isCorrect) "✓ 回答正确！" else "✗ 回答错误",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (isCorrect)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onErrorContainer,
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = currentQuestion!!.explanation,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
+                                if (!isCorrect) {
+                                    Text(
+                                        text = "正确答案：${currentQuestion!!.answer}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                    )
+                                }
+                            }
+                        }
+
+                        // Explanation
+                        if (currentQuestion!!.explanation.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "📖 解析",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = currentQuestion!!.explanation,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                        }
+
+                        // Hint text for auto-advance
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = if (isLastQuestion) "即将显示答题结果..." else "即将自动进入下一题...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Manual navigation buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            if (currentIndex > 0) {
+                                OutlinedButton(
+                                    onClick = { viewModel.previousQuestion() },
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Text("上一题")
+                                }
+                            }
+                            if (isLastQuestion) {
+                                Button(
+                                    onClick = { viewModel.finishQuiz() },
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Text("查看结果")
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { viewModel.nextQuestion() },
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Text("下一题")
+                                }
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Navigation buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        if (currentIndex > 0) {
-                            OutlinedButton(
-                                onClick = { viewModel.previousQuestion() },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text("上一题")
-                            }
-                        }
-                        if (!isLastQuestion) {
-                            Button(
-                                onClick = { viewModel.nextQuestion() },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text("下一题")
-                            }
-                        } else {
-                            Button(
-                                onClick = { viewModel.resetQuiz() },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text("重新开始")
-                            }
-                        }
-                    }
                 }
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(16.dp))
+@Composable
+private fun QuizCompletedScreen(
+    correctCount: Int,
+    totalAnswered: Int,
+    onRestart: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accuracy = if (totalAnswered > 0) (correctCount * 100 / totalAnswered) else 0
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "🎉",
+            style = MaterialTheme.typography.displayLarge,
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "刷题完成！",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "正确率",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = "$accuracy%",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "正确 $correctCount / 共 $totalAnswered 题",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(
+                onClick = onBack,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("返回题库")
+            }
+            Button(
+                onClick = onRestart,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("再来一次")
             }
         }
     }
@@ -381,7 +488,7 @@ private fun OptionCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         enabled = isEnabled,
     ) {
