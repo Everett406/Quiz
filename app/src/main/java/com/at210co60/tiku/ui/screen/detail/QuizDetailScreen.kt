@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +29,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +41,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.at210co60.tiku.data.model.BankStats
+import com.at210co60.tiku.data.repository.QuestionRepository
 
 // Card colors
 private val CardBlue = Color(0xFFE3F2FD)
@@ -47,10 +53,18 @@ private val CardPink = Color(0xFFFCE4EC)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizDetailScreen(
+    bankId: Long,
     title: String,
+    repository: QuestionRepository,
     onBack: () -> Unit,
     onNavigateToPractice: (String) -> Unit,
 ) {
+    var stats by remember { mutableStateOf<BankStats?>(null) }
+
+    LaunchedEffect(bankId) {
+        stats = repository.getBankStatsSnapshot(bankId)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -120,7 +134,7 @@ fun QuizDetailScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 底部统计看板
-            StatsCard()
+            StatsCard(stats = stats)
         }
     }
 }
@@ -173,22 +187,45 @@ private fun FunctionCard(
 }
 
 @Composable
-private fun StatsCard() {
+private fun StatsCard(stats: BankStats?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "共 ${stats?.totalQuestions ?: 0} 题",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if ((stats?.wrongAnswers ?: 0) > 0) {
+                Text(
+                    text = "已收录 ${stats?.wrongAnswers} 道错题",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            StatItem(value = "--", label = "已做题")
-            StatItem(value = "--", label = "正确率")
-            StatItem(value = "--", label = "错题")
-            StatItem(value = "--", label = "考试通过")
+            StatItem(value = "${stats?.answeredQuestions ?: 0}", label = "已做题")
+            StatItem(value = "${stats?.correctRate ?: 0}%", label = "正确率")
+            StatItem(value = "${stats?.wrongAnswers ?: 0}", label = "错题")
+            StatItem(
+                value = if ((stats?.answeredQuestions ?: 0) >= 5 && (stats?.correctRate ?: 0) >= 80) "通过" else "--",
+                label = "考试通过"
+            )
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

@@ -16,3 +16,13 @@ enum class QuestionType {
     TRUE_FALSE,
     SHORT_ANSWER,
 }
+
+data class AnswerRecord(
+    val id: Long = 0,
+    val questionId: Long,
+    val questionBankId: Long,
+    val userAnswer: String,
+    val isCorrect: Boolean,
+    val answeredAt: Long,
+    val practiceMode: String,
+)

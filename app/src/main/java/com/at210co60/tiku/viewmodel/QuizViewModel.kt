@@ -13,7 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-class QuizViewModel(private val repository: QuestionRepository) : ViewModel() {
+class QuizViewModel(
+    private val repository: QuestionRepository,
+    private val mode: String = "sequential",
+    private val bankId: Long = 0,
+) : ViewModel() {
 
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
@@ -24,7 +28,13 @@ class QuizViewModel(private val repository: QuestionRepository) : ViewModel() {
     private val _isAnswered = MutableStateFlow(false)
     val isAnswered: StateFlow<Boolean> = _isAnswered.asStateFlow()
 
-    val questions: StateFlow<List<Question>> = repository.getAllQuestions()
+    // Load questions based on mode and bankId
+    private val questionsFlow = when (mode) {
+        "random", "exam" -> repository.getRandomQuestionsByBank(bankId, 20)
+        else -> repository.getQuestionsByBank(bankId)
+    }
+
+    val questions: StateFlow<List<Question>> = questionsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val currentQuestion: StateFlow<Question?> = combine(
@@ -84,9 +94,13 @@ class QuizViewModel(private val repository: QuestionRepository) : ViewModel() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    class Factory(private val repository: QuestionRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: QuestionRepository,
+        private val mode: String = "sequential",
+        private val bankId: Long = 0,
+    ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return QuizViewModel(repository) as T
+            return QuizViewModel(repository, mode, bankId) as T
         }
     }
 }

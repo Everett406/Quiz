@@ -21,6 +21,18 @@ interface QuestionDao {
     @Query("SELECT COUNT(*) FROM questions")
     suspend fun getQuestionCount(): Int
 
+    @Query("SELECT * FROM questions WHERE questionBankId = :bankId ORDER BY id ASC")
+    fun getQuestionsByBank(bankId: Long): Flow<List<QuestionEntity>>
+
+    @Query("SELECT * FROM questions WHERE questionBankId = :bankId ORDER BY RANDOM() LIMIT :limit")
+    fun getRandomQuestionsByBank(bankId: Long, limit: Int): Flow<List<QuestionEntity>>
+
+    @Query("SELECT COUNT(*) FROM questions WHERE questionBankId = :bankId")
+    suspend fun getQuestionCountByBank(bankId: Long): Int
+
+    @Query("SELECT COUNT(*) FROM questions WHERE questionBankId = :bankId")
+    fun getQuestionCountByBankFlow(bankId: Long): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestions(questions: List<QuestionEntity>)
 

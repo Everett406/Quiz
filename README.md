@@ -86,6 +86,9 @@ room-runtime / room-ktx / room-compiler  # Room 本地数据库
 
 # Serialization
 kotlinx-serialization-json              # JSON 序列化
+
+# Preferences
+datastore-preferences                   # 用户设置持久化
 ```
 
 ### 计划引入的依赖
@@ -96,7 +99,6 @@ kotlinx-serialization-json              # JSON 序列化
 |------|------|----------|
 | `Retrofit + OkHttp` | 网络请求，在线题库同步 | 网络层搭建 |
 | `Dagger Hilt` / `Koin` | 依赖注入 | 架构优化 |
-| `DataStore` | 用户偏好设置存储 | 设置功能 |
 | `Coil` / `Accompanist` | 图片加载 | 题目图片支持 |
 | `ViewPager2` / `HorizontalPager` | 滑动刷题体验 | 刷题功能 |
 
@@ -113,77 +115,65 @@ Quiz/
 │       ├── java/com/at210co60/tiku/
 │       │   ├── MainActivity.kt             # 主 Activity
 │       │   ├── TikuApp.kt                  # Composable 入口 & 导航图
-│       │   ├── TikuApplication.kt          # Application 类
+│       │   ├── TikuApplication.kt         # Application 类
 │       │   ├── data/
-│       │   │   └── model/
-│       │   │       └── Question.kt         # 题目数据模型
+│       │   │   ├── model/                 # 数据模型
+│       │   │   │   ├── Question.kt        # 题目 & 答题记录模型
+│       │   │   │   └── Models.kt         # 题库 & 统计模型
+│       │   │   ├── local/
+│       │   │   │   ├── entity/            # Room 实体类
+│       │   │   │   ├── dao/              # Room DAO 接口
+│       │   │   │   └── TikuDatabase.kt  # Room 数据库
+│       │   │   └── repository/           # 数据仓库
+│       │   │       ├── QuestionRepository.kt
+│       │   │       └── SettingsRepository.kt
 │       │   ├── navigation/
-│       │   │   └── Screen.kt               # 路由定义
+│       │   │   └── Screen.kt             # 路由定义
 │       │   └── ui/
 │       │       ├── screen/
-│       │       │   ├── home/
-│       │       │   │   └── HomeScreen.kt   # 首页
-│       │       │   └── question/
-│       │       │       └── QuestionListScreen.kt  # 题目列表页
+│       │       │   ├── home/             # 首页
+│       │       │   ├── detail/          # 题库详情
+│       │       │   ├── quiz/            # 刷题练习
+│       │       │   ├── wrong/           # 错题本
+│       │       │   └── settings/        # 设置
 │       │       └── theme/
-│       │           ├── Color.kt            # 颜色定义
-│       │           ├── Theme.kt            # 主题定义 (TikuTheme)
-│       │           └── Type.kt             # 字体排版定义
+│       │           ├── Color.kt         # 颜色定义
+│       │           ├── Theme.kt         # 主题定义 (TikuTheme)
+│       │           └── Type.kt          # 字体排版定义
 │       └── res/
-│           └── values/                     # 资源文件
+│           ├── drawable/                 # 图标资源
+│           └── mipmap-*/                # 应用图标
 ├── .github/
 │   └── workflows/
-│       └── build-release.yml               # CI/CD 自动构建 & 发布
+│       └── build-release.yml             # CI/CD 自动构建 & 发布
 ├── gradle/
-│   └── libs.versions.toml                  # 版本目录 (Version Catalog)
-├── build.gradle.kts                        # 根级构建配置
-├── settings.gradle.kts                     # 项目设置
-├── gradle.properties                       # Gradle 属性
-├── LICENSE                                 # MIT 许可证
+│   └── libs.versions.toml                # 版本目录 (Version Catalog)
+├── build.gradle.kts                      # 根级构建配置
+├── settings.gradle.kts                    # 项目设置
+├── gradle.properties                      # Gradle 属性
+├── LICENSE                               # MIT 许可证
 └── .gitignore
-```
-
-### 计划扩展的目录结构
-
-```
-app/src/main/java/com/at210co60/tiku/
-├── data/
-│   ├── model/              # 数据模型 (Question, AnswerRecord, Category...)
-│   ├── local/              # 本地数据源 (Room DAO, Database)
-│   ├── remote/             # 远程数据源 (API 接口)
-│   └── repository/         # 数据仓库 (Repository 模式)
-├── ui/
-│   ├── screen/             # 各页面
-│   │   ├── home/           # 首页
-│   │   ├── question/       # 刷题相关页面
-│   │   ├── exam/           # 模拟考试
-│   │   ├── wrong/          # 错题本
-│   │   ├── stats/          # 学习统计
-│   │   └── settings/       # 设置
-│   ├── component/          # 通用可复用组件
-│   └── theme/              # 主题、颜色、字体
-├── navigation/             # 导航路由
-├── viewmodel/              # ViewModel 层
-└── util/                   # 工具类
 ```
 
 ---
 
 ## 🚀 功能规划
 
-### 当前已实现（v1.1.1）
+### 当前已实现（v1.1.2）
 
 - [x] 项目基础框架搭建（Kotlin + Jetpack Compose）
 - [x] 题库列表页（品牌标题 + 导入按钮 + 题库卡片列表 + 设置入口）
 - [x] 题库详情页（4 个彩色功能卡片 + 底部数据看板）
 - [x] 刷题练习（顺序/随机/模拟考试模式，选择答案后即时反馈 + 解析展示）
-- [x] 错题本页面
-- [x] 设置页（分段控件式：主题切换、字号设置）
+- [x] 错题本页面（自动收录错题，支持展开查看详情）
+- [x] 设置页（DataStore 持久化：主题切换跟随/亮色/暗色、字号小/标准/大/特大）
 - [x] 题目数据模型（支持四种题型：单选/多选/判断/简答）
-- [x] Room 本地数据库（题目持久化存储）
+- [x] Room 本地数据库（QuestionBank / Question / AnswerRecord 三表关联）
 - [x] 题库导入（支持从 JSON 文件导入 + 内置示例数据）
 - [x] M3E 主题系统（完整亮暗色支持、Material You 动态取色）
-- [x] Repository 数据层（Entity ↔ Domain Model 转换）
+- [x] Repository 数据层（Entity ↔ Domain Model 转换，三 DAO 模式）
+- [x] 答题记录持久化（AnswerRecord 表，答错自动收录到错题本）
+- [x] 自定义应用图标（3D 堆叠卡片 + 绿色对勾）
 
 ### 题型支持
 
@@ -198,8 +188,8 @@ app/src/main/java/com/at210co60/tiku/
 
 #### P0 — 核心功能（优先级最高）
 
-- [ ] **答题记录持久化**：记录每次答题结果到数据库，支持历史统计
-- [ ] **错题自动收录**：答题结果写入数据库，答错自动记录
+- [x] **答题记录持久化**：记录每次答题结果到数据库，支持历史统计
+- [x] **错题自动收录**：答题结果写入数据库，答错自动记录
 
 #### P1 — 重要功能
 
@@ -210,7 +200,6 @@ app/src/main/java/com/at210co60/tiku/
 #### P2 — 增强功能
 
 - [ ] **在线题库同步**：通过网络 API 获取和同步题库数据
-- [ ] **用户设置**：主题切换、字体大小、每日刷题目标等
 - [ ] **搜索功能**：按关键词搜索题目
 - [ ] **收藏功能**：标记重点题目方便复习
 
@@ -218,7 +207,6 @@ app/src/main/java/com/at210co60/tiku/
 
 - [ ] **多端适配**：平板、桌面端（大屏）适配
 - [ ] **Widget 小组件**：桌面小组件展示今日刷题进度
-- [ ] **深色模式优化**：完善深色模式下的视觉体验
 - [ ] **国际化 (i18n)**：支持多语言切换
 
 ---
@@ -247,13 +235,14 @@ View (Composable Screen)
 
 | 类别 | 规范 | 示例 |
 |------|------|------|
-| Screen | `XxxScreen.kt` | `HomeScreen.kt`, `QuestionListScreen.kt` |
-| ViewModel | `XxxViewModel.kt` | `QuizViewModel.kt`, `StatsViewModel.kt` |
+| Screen | `XxxScreen.kt` | `HomeScreen.kt`, `QuizPracticeScreen.kt` |
+| ViewModel | `XxxViewModel.kt` | `QuizViewModel.kt`, `SettingsViewModel.kt` |
 | 数据模型 | 名词，单数 | `Question.kt`, `AnswerRecord.kt` |
-| Repository | `XxxRepository.kt` | `QuestionRepository.kt` |
-| DAO | `XxxDao.kt` | `QuestionDao.kt` |
+| Repository | `XxxRepository.kt` | `QuestionRepository.kt`, `SettingsRepository.kt` |
+| DAO | `XxxDao.kt` | `QuestionDao.kt`, `QuestionBankDao.kt`, `AnswerRecordDao.kt` |
+| Entity | `XxxEntity.kt` | `QuestionEntity.kt`, `QuestionBankEntity.kt`, `AnswerRecordEntity.kt` |
 | 通用组件 | `XxxCard.kt`, `XxxButton.kt` | `QuestionCard.kt` |
-| 路由 | 驼峰命名 | `Home`, `QuestionList`, `QuizPractice` |
+| 路由 | 驼峰命名 | `Home`, `QuizDetail`, `QuizPractice` |
 
 ---
 
@@ -275,7 +264,7 @@ View (Composable Screen)
 代码推送至 main 分支
     → GitHub Actions 自动触发
     → 检出代码 & 配置 JDK 环境
-    → Gradle 构建 Debug APK
+    → Gradle 构建 Release APK (签名)
     → 构建成功 → 创建 GitHub Release
     → 上传 APK 到 Release Assets
 ```
@@ -289,7 +278,7 @@ View (Composable Screen)
 ### 注意事项
 
 - 构建完成后需等待一段时间，再通过 API 或 GitHub 界面确认构建状态
-- Release 标签与 `versionName` 保持一致（如 `v1.0.0`）
+- Release 标签与 `versionName` 保持一致（如 `v1.1.2`）
 
 ---
 
@@ -304,6 +293,7 @@ View (Composable Screen)
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v1.1.2 | 2026-05-27 | 数据层重构：QuestionBank/Question/AnswerRecord 三表关联；设置页 DataStore 持久化（主题+字号）；错题本接入真实数据；自定义应用图标 |
 | v1.1.1 | 2026-05-27 | 重构页面布局：题库列表页、题库详情页（含4个功能入口卡片和统计看板）、设置页、错题本；优化 M3E 主题系统亮暗色支持 |
 | v1.1.0 | 2026-05-26 | 新增刷题练习、题库导入、Room 数据库、示例数据 |
 | v1.0.0 | 2026-05-26 | 项目初始化，基础框架搭建 |
@@ -315,4 +305,3 @@ View (Composable Screen)
 本项目基于 [MIT License](LICENSE) 开源。
 
 Copyright (c) 2026 Everett406
-

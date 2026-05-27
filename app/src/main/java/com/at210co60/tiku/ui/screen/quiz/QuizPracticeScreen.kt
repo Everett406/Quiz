@@ -1,7 +1,6 @@
 package com.at210co60.tiku.ui.screen.quiz
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,10 +49,11 @@ import com.at210co60.tiku.viewmodel.QuizViewModel
 fun QuizPracticeScreen(
     repository: QuestionRepository,
     mode: String = "sequential",
+    bankId: Long = 0,
     onBack: () -> Unit,
 ) {
     val viewModel: QuizViewModel = viewModel(
-        factory = QuizViewModel.Factory(repository)
+        factory = QuizViewModel.Factory(repository, mode, bankId)
     )
 
     val currentQuestion by viewModel.currentQuestion.collectAsState()
@@ -62,10 +63,30 @@ fun QuizPracticeScreen(
     val isAnswered by viewModel.isAnswered.collectAsState()
     val isLastQuestion by viewModel.isLastQuestion.collectAsState()
 
+    // Record answer when answered
+    LaunchedEffect(isAnswered, selectedAnswer, currentQuestion) {
+        if (isAnswered && selectedAnswer != null && currentQuestion != null) {
+            repository.recordAnswer(
+                questionId = currentQuestion!!.id,
+                bankId = bankId,
+                userAnswer = selectedAnswer!!,
+                isCorrect = viewModel.isCorrect(),
+                practiceMode = mode,
+            )
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("刷题练习") },
+                title = {
+                    val titleText = when (mode) {
+                        "random" -> "随机刷题"
+                        "exam" -> "模拟考试"
+                        else -> "顺序刷题"
+                    }
+                    Text(titleText)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")

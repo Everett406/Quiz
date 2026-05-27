@@ -14,8 +14,8 @@ android {
         applicationId = "com.at210co60.tiku"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.1.2"
     }
 
     signingConfigs {
@@ -65,5 +65,6 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.datastore.preferences)
     debugImplementation(libs.compose.ui.tooling)
 }
