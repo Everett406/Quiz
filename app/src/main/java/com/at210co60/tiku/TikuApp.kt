@@ -1,21 +1,20 @@
 package com.at210co60.tiku
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.at210co60.tiku.data.local.TikuDatabase
 import com.at210co60.tiku.data.repository.QuestionRepository
 import com.at210co60.tiku.navigation.Screen
+import com.at210co60.tiku.ui.screen.detail.QuizDetailScreen
 import com.at210co60.tiku.ui.screen.home.HomeScreen
-import com.at210co60.tiku.ui.screen.import.ImportScreen
-import com.at210co60.tiku.ui.screen.question.QuestionListScreen
 import com.at210co60.tiku.ui.screen.quiz.QuizPracticeScreen
+import com.at210co60.tiku.ui.screen.settings.SettingsScreen
+import com.at210co60.tiku.ui.screen.wrong.WrongQuestionsScreen
 import com.at210co60.tiku.ui.theme.TikuTheme
 
 @Composable
@@ -30,32 +29,52 @@ fun TikuApp(database: TikuDatabase) {
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToQuestionList = {
-                        navController.navigate(Screen.QuestionList.route)
+                    onNavigateToDetail = { title ->
+                        navController.navigate("quiz_detail/$title")
                     },
-                    onNavigateToQuizPractice = {
-                        navController.navigate(Screen.QuizPractice.route)
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route)
                     },
                     onNavigateToImport = {
-                        navController.navigate(Screen.Import.route)
+                        navController.navigate(Screen.Home.route) // TODO
                     },
                 )
             }
-            composable(Screen.QuestionList.route) {
-                QuestionListScreen(
-                    repository = repository,
+            composable(
+                route = "quiz_detail/{title}",
+                arguments = listOf(navArgument("title") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val title = backStackEntry.arguments?.getString("title") ?: "题库"
+                QuizDetailScreen(
+                    title = title,
                     onBack = { navController.popBackStack() },
+                    onNavigateToPractice = { mode ->
+                        if (mode == "wrong") {
+                            navController.navigate(Screen.WrongQuestions.route)
+                        } else {
+                            navController.navigate(Screen.QuizPractice.createRoute(mode))
+                        }
+                    },
                 )
             }
-            composable(Screen.QuizPractice.route) {
+            composable(
+                route = Screen.QuizPractice.route,
+                arguments = listOf(navArgument("mode") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val mode = backStackEntry.arguments?.getString("mode") ?: "sequential"
                 QuizPracticeScreen(
                     repository = repository,
+                    mode = mode,
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable(Screen.Import.route) {
-                ImportScreen(
-                    repository = repository,
+            composable(Screen.WrongQuestions.route) {
+                WrongQuestionsScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
                     onBack = { navController.popBackStack() },
                 )
             }
