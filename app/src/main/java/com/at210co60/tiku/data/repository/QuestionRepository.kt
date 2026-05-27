@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class QuestionRepository(private val questionDao: QuestionDao) {
+private val json = Json { ignoreUnknownKeys = true }
 
-    private val json = Json { ignoreUnknownKeys = true }
+class QuestionRepository(private val questionDao: QuestionDao) {
 
     fun getAllQuestions(): Flow<List<Question>> =
         questionDao.getAllQuestions().map { entities -> entities.map { it.toDomain() } }
@@ -68,9 +68,9 @@ private data class QuestionImportDto(
     fun toEntity(): QuestionEntity = QuestionEntity(
         title = title,
         type = type,
-        options = Json.encodeToString(options),
+        options = json.encodeToString(options),
         answer = answer,
         explanation = explanation,
-        tags = Json.encodeToString(tags),
+        tags = json.encodeToString(tags),
     )
 }

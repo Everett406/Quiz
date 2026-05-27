@@ -48,7 +48,7 @@ class QuizViewModel(private val repository: QuestionRepository) : ViewModel() {
     }
 
     fun nextQuestion() {
-        if (!_isLastQuestion.value) {
+        if (!isLastQuestion.value) {
             _currentIndex.value++
             _selectedAnswer.value = null
             _isAnswered.value = false
