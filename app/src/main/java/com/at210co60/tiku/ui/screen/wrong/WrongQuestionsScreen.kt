@@ -223,9 +223,9 @@ private fun WrongQuestionCard(
                     color = MaterialTheme.colorScheme.error,
                 )
                 Text(
-                    text = "正确答案是：${record.answer}",
+                    text = if (record.isCorrect) "✓ 正确" else "✗ 错误",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = if (record.isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 )
             }
         }
