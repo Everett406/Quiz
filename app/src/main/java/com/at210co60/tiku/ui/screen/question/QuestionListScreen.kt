@@ -1,7 +1,9 @@
 package com.at210co60.tiku.ui.screen.question
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,43 +17,23 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.at210co60.tiku.data.model.Question
 import com.at210co60.tiku.data.model.QuestionType
-
-private val sampleQuestions = listOf(
-    Question(
-        id = 1,
-        title = "Kotlin 中 val 和 var 的区别是什么？",
-        type = QuestionType.SHORT_ANSWER,
-        options = emptyList(),
-        answer = "val 声明不可变变量（只读），var 声明可变变量。",
-        tags = listOf("Kotlin", "基础"),
-    ),
-    Question(
-        id = 2,
-        title = "Compose 中哪个注解用于标记可组合函数？",
-        type = QuestionType.SINGLE_CHOICE,
-        options = listOf("@Compose", "@Composable", "@Component", "@View"),
-        answer = "@Composable",
-        tags = listOf("Jetpack Compose", "基础"),
-    ),
-    Question(
-        id = 3,
-        title = "JVM 上的字节码文件扩展名是 .class。",
-        type = QuestionType.TRUE_FALSE,
-        options = emptyList(),
-        answer = "true",
-        tags = listOf("JVM", "基础"),
-    ),
-)
+import com.at210co60.tiku.data.repository.QuestionRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionListScreen(
+    repository: QuestionRepository,
     onBack: () -> Unit,
 ) {
+    val questions by repository.getAllQuestions().collectAsState(initial = emptyList())
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,15 +50,38 @@ fun QuestionListScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-        ) {
-            items(sampleQuestions) { question ->
-                QuestionCard(question = question)
+        if (questions.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "暂无题目",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "请先通过「导入题库」添加题目",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(questions, key = { it.id }) { question ->
+                    QuestionCard(question = question)
+                }
             }
         }
     }
@@ -89,16 +94,41 @@ private fun QuestionCard(question: Question) {
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = question.title,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                text = question.tags.joinToString(" / "),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = question.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = when (question.type) {
+                        QuestionType.SINGLE_CHOICE -> "单选"
+                        QuestionType.MULTI_CHOICE -> "多选"
+                        QuestionType.TRUE_FALSE -> "判断"
+                        QuestionType.SHORT_ANSWER -> "简答"
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                question.tags.forEach { tag ->
+                    Text(
+                        text = tag,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }

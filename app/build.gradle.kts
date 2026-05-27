@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -12,14 +14,24 @@ android {
         applicationId = "com.at210co60.tiku"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "../tiku-release.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "tiku2026"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "tiku"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "tiku2026"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -49,5 +61,9 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.compose.ui.tooling)
 }

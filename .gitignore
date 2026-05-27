@@ -35,3 +35,6 @@ local.properties
 *.keystore
 !gradle-wrapper.jar
 /app/release/
+
+# Signing
+tiku-release.jks
