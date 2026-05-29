@@ -17,7 +17,7 @@ import com.at210co60.tiku.data.local.entity.QuestionEntity
         QuestionBankEntity::class,
         AnswerRecordEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class TikuDatabase : RoomDatabase() {

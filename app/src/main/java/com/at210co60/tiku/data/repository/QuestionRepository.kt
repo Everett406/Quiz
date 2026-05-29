@@ -11,6 +11,7 @@ import com.at210co60.tiku.data.model.BankStats
 import com.at210co60.tiku.data.model.Question
 import com.at210co60.tiku.data.model.QuestionBank
 import com.at210co60.tiku.data.model.QuestionType
+import com.at210co60.tiku.data.model.WrongRecordWithQuestion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -147,6 +148,30 @@ class QuestionRepository(
         answerRecordDao.getWrongRecords().map { entities ->
             entities.map { it.toDomain() }
         }
+
+    fun getWrongRecordsWithQuestions(): Flow<List<WrongRecordWithQuestion>> =
+        answerRecordDao.getWrongRecordsWithQuestions().map { entities ->
+            entities.map { entity ->
+                WrongRecordWithQuestion(
+                    record = entity.record.toDomain(),
+                    questionTitle = entity.questionTitle,
+                    questionType = QuestionType.valueOf(entity.questionType),
+                    questionOptions = json.decodeFromString(entity.questionOptions),
+                    questionAnswers = json.decodeFromString(entity.questionAnswers),
+                    questionExplanation = entity.questionExplanation,
+                )
+            }
+        }
+
+    suspend fun deleteWrongRecord(questionId: Long) {
+        answerRecordDao.deleteByQuestionId(questionId)
+    }
+
+    suspend fun clearAllData() {
+        answerRecordDao.deleteAll()
+        questionDao.deleteAllQuestions()
+        questionBankDao.deleteAll()
+    }
 }
 
 private fun QuestionEntity.toDomain(): Question = Question(
@@ -154,7 +179,7 @@ private fun QuestionEntity.toDomain(): Question = Question(
     title = title,
     type = QuestionType.valueOf(type),
     options = json.decodeFromString<List<String>>(options),
-    answer = answer,
+    answers = json.decodeFromString<List<String>>(answers.ifEmpty { "[]" }),
     explanation = explanation,
     tags = json.decodeFromString<List<String>>(tags.ifEmpty { "[]" }),
 )
@@ -165,7 +190,7 @@ private fun Question.toEntity(bankId: Long): QuestionEntity = QuestionEntity(
     title = title,
     type = type.name,
     options = json.encodeToString(options),
-    answer = answer,
+    answers = json.encodeToString(answers),
     explanation = explanation,
     tags = json.encodeToString(tags),
 )
@@ -185,7 +210,7 @@ private data class QuestionImportDto(
     val title: String,
     val type: String = "SINGLE_CHOICE",
     val options: List<String> = emptyList(),
-    val answer: String,
+    val answers: List<String>,
     val explanation: String = "",
     val tags: List<String> = emptyList(),
 ) {
@@ -194,7 +219,7 @@ private data class QuestionImportDto(
         title = title,
         type = type,
         options = Json.encodeToString(options),
-        answer = answer,
+        answers = Json.encodeToString(answers),
         explanation = explanation,
         tags = Json.encodeToString(tags),
     )

@@ -18,3 +18,12 @@ data class BankStats(
     val correctRate: Int
         get() = if (answeredQuestions > 0) (correctAnswers * 100 / answeredQuestions) else 0
 }
+
+data class WrongRecordWithQuestion(
+    val record: AnswerRecord,
+    val questionTitle: String,
+    val questionType: QuestionType,
+    val questionOptions: List<String>,
+    val questionAnswers: List<String>,
+    val questionExplanation: String,
+)

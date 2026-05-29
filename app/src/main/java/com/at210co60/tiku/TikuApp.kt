@@ -111,6 +111,7 @@ fun TikuApp(
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     settingsRepository = settingsRepository,
+                    questionRepository = repository,
                     onBack = { navController.popBackStack() },
                 )
             }

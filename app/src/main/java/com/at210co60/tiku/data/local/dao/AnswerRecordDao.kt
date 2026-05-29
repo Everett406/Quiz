@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.at210co60.tiku.data.local.entity.AnswerRecordEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,16 @@ interface AnswerRecordDao {
 
     @Query("SELECT * FROM answer_records WHERE isCorrect = 0 ORDER BY answeredAt DESC")
     fun getWrongRecords(): Flow<List<AnswerRecordEntity>>
+
+    @Query("""
+        SELECT ar.*, q.title as questionTitle, q.type as questionType, q.options as questionOptions,
+               q.answers as questionAnswers, q.explanation as questionExplanation
+        FROM answer_records ar
+        INNER JOIN questions q ON ar.questionId = q.id
+        WHERE ar.isCorrect = 0
+        ORDER BY ar.answeredAt DESC
+    """)
+    fun getWrongRecordsWithQuestions(): Flow<List<WrongRecordWithQuestionEntity>>
 
     @Query("SELECT * FROM answer_records WHERE questionId = :questionId ORDER BY answeredAt DESC")
     fun getRecordsByQuestion(questionId: Long): Flow<List<AnswerRecordEntity>>

@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,31 +62,26 @@ fun QuizPracticeScreen(
     val currentQuestion by viewModel.currentQuestion.collectAsState()
     val currentIndex by viewModel.currentIndex.collectAsState()
     val totalQuestions by viewModel.totalQuestions.collectAsState()
-    val selectedAnswer by viewModel.selectedAnswer.collectAsState()
+    val selectedAnswers by viewModel.selectedAnswers.collectAsState()
     val isAnswered by viewModel.isAnswered.collectAsState()
     val isLastQuestion by viewModel.isLastQuestion.collectAsState()
     val quizCompleted by viewModel.quizCompleted.collectAsState()
     val correctCount by viewModel.correctCount.collectAsState()
     val totalAnswered by viewModel.totalAnswered.collectAsState()
 
-    // Record answer when answered
-    LaunchedEffect(isAnswered, selectedAnswer, currentQuestion) {
-        if (isAnswered && selectedAnswer != null && currentQuestion != null) {
+    LaunchedEffect(isAnswered, selectedAnswers, currentQuestion) {
+        if (isAnswered && selectedAnswers.isNotEmpty() && currentQuestion != null) {
+            val userAnswer = when (currentQuestion!!.type) {
+                QuestionType.MULTI_CHOICE -> selectedAnswers.sorted().joinToString(", ")
+                else -> selectedAnswers.firstOrNull() ?: ""
+            }
             repository.recordAnswer(
                 questionId = currentQuestion!!.id,
                 bankId = bankId,
-                userAnswer = selectedAnswer!!,
+                userAnswer = userAnswer,
                 isCorrect = viewModel.isCorrect(),
                 practiceMode = mode,
             )
-        }
-    }
-
-    // Auto advance to next question after a short delay
-    LaunchedEffect(isAnswered) {
-        if (isAnswered && !isLastQuestion && !quizCompleted) {
-            kotlinx.coroutines.delay(1500) // 1.5秒后自动进入下一题
-            viewModel.nextQuestion()
         }
     }
 
@@ -109,7 +106,6 @@ fun QuizPracticeScreen(
     ) { padding ->
         when {
             quizCompleted -> {
-                // Show completion screen
                 QuizCompletedScreen(
                     correctCount = correctCount,
                     totalAnswered = totalAnswered,
@@ -146,7 +142,6 @@ fun QuizPracticeScreen(
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    // Progress indicator
                     Text(
                         text = "${currentIndex + 1} / $totalQuestions",
                         style = MaterialTheme.typography.labelLarge,
@@ -167,7 +162,6 @@ fun QuizPracticeScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Question type badge
                     val typeLabel = when (currentQuestion!!.type) {
                         QuestionType.SINGLE_CHOICE -> "单选题"
                         QuestionType.MULTI_CHOICE -> "多选题"
@@ -183,7 +177,6 @@ fun QuizPracticeScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Question title
                     Text(
                         text = currentQuestion!!.title,
                         style = MaterialTheme.typography.titleLarge,
@@ -192,15 +185,14 @@ fun QuizPracticeScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Answer options based on question type
                     when (currentQuestion!!.type) {
                         QuestionType.SINGLE_CHOICE -> {
                             currentQuestion!!.options.forEach { option ->
                                 OptionCard(
                                     text = option,
-                                    isSelected = selectedAnswer == option,
-                                    isCorrect = isAnswered && option == currentQuestion!!.answer,
-                                    isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
+                                    isSelected = option in selectedAnswers,
+                                    isCorrect = isAnswered && option == currentQuestion!!.answers.firstOrNull(),
+                                    isWrong = isAnswered && selectedAnswers.contains(option) && option != currentQuestion!!.answers.firstOrNull(),
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer(option) },
                                 )
@@ -211,13 +203,23 @@ fun QuizPracticeScreen(
                             currentQuestion!!.options.forEach { option ->
                                 OptionCard(
                                     text = option,
-                                    isSelected = selectedAnswer == option,
-                                    isCorrect = isAnswered && option == currentQuestion!!.answer,
-                                    isWrong = isAnswered && selectedAnswer == option && option != currentQuestion!!.answer,
+                                    isSelected = option in selectedAnswers,
+                                    isCorrect = isAnswered && option in currentQuestion!!.answers,
+                                    isWrong = isAnswered && option in selectedAnswers && option !in currentQuestion!!.answers,
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer(option) },
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            if (!isAnswered) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = { viewModel.confirmMultiChoiceAnswer() },
+                                    enabled = selectedAnswers.isNotEmpty(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("确认答案")
+                                }
                             }
                         }
                         QuestionType.TRUE_FALSE -> {
@@ -227,18 +229,18 @@ fun QuizPracticeScreen(
                             ) {
                                 OptionCard(
                                     text = "正确",
-                                    isSelected = selectedAnswer == "true",
-                                    isCorrect = isAnswered && currentQuestion!!.answer.equals("true", ignoreCase = true) && selectedAnswer == "true",
-                                    isWrong = isAnswered && selectedAnswer == "true" && !currentQuestion!!.answer.equals("true", ignoreCase = true),
+                                    isSelected = "true" in selectedAnswers,
+                                    isCorrect = isAnswered && currentQuestion!!.answers.firstOrNull()?.equals("true", ignoreCase = true) == true && "true" in selectedAnswers,
+                                    isWrong = isAnswered && "true" in selectedAnswers && currentQuestion!!.answers.firstOrNull()?.equals("true", ignoreCase = true) != true,
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer("true") },
                                     modifier = Modifier.weight(1f),
                                 )
                                 OptionCard(
                                     text = "错误",
-                                    isSelected = selectedAnswer == "false",
-                                    isCorrect = isAnswered && currentQuestion!!.answer.equals("false", ignoreCase = true) && selectedAnswer == "false",
-                                    isWrong = isAnswered && selectedAnswer == "false" && !currentQuestion!!.answer.equals("false", ignoreCase = true),
+                                    isSelected = "false" in selectedAnswers,
+                                    isCorrect = isAnswered && currentQuestion!!.answers.firstOrNull()?.equals("false", ignoreCase = true) == true && "false" in selectedAnswers,
+                                    isWrong = isAnswered && "false" in selectedAnswers && currentQuestion!!.answers.firstOrNull()?.equals("false", ignoreCase = true) != true,
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer("false") },
                                     modifier = Modifier.weight(1f),
@@ -268,7 +270,6 @@ fun QuizPracticeScreen(
                         }
                     }
 
-                    // Answer feedback (only show when answered)
                     if (isAnswered) {
                         Spacer(modifier = Modifier.height(24.dp))
                         val isCorrect = viewModel.isCorrect()
@@ -282,26 +283,35 @@ fun QuizPracticeScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = if (isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isCorrect) "回答正确！" else "回答错误",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = if (isCorrect)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onErrorContainer,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = if (isCorrect) "✓ 回答正确！" else "✗ 回答错误",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = "正确答案：${currentQuestion!!.answers.joinToString(", ")}",
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = if (isCorrect)
                                         MaterialTheme.colorScheme.onPrimaryContainer
                                     else
                                         MaterialTheme.colorScheme.onErrorContainer,
                                 )
-                                if (!isCorrect) {
-                                    Text(
-                                        text = "正确答案：${currentQuestion!!.answer}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                    )
-                                }
                             }
                         }
 
-                        // Explanation
                         if (currentQuestion!!.explanation.isNotBlank()) {
                             Spacer(modifier = Modifier.height(12.dp))
                             Card(
@@ -312,7 +322,7 @@ fun QuizPracticeScreen(
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
-                                        text = "📖 解析",
+                                        text = "解析",
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -325,19 +335,8 @@ fun QuizPracticeScreen(
                             }
                         }
 
-                        // Hint text for auto-advance
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = if (isLastQuestion) "即将显示答题结果..." else "即将自动进入下一题...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                        )
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Manual navigation buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -358,7 +357,7 @@ fun QuizPracticeScreen(
                                     Text("查看结果")
                                 }
                             } else {
-                                OutlinedButton(
+                                Button(
                                     onClick = { viewModel.nextQuestion() },
                                     modifier = Modifier.weight(1f),
                                 ) {
@@ -393,7 +392,7 @@ private fun QuizCompletedScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "🎉",
+            text = "\uD83C\uDF89",
             style = MaterialTheme.typography.displayLarge,
         )
 
@@ -492,10 +491,23 @@ private fun OptionCard(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         enabled = isEnabled,
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
+        Row(
             modifier = Modifier.padding(16.dp),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = borderColor,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
     }
 }

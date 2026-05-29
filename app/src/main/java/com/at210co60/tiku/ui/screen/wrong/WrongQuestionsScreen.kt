@@ -35,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,8 +44,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.at210co60.tiku.data.model.AnswerRecord
+import com.at210co60.tiku.data.model.QuestionType
+import com.at210co60.tiku.data.model.WrongRecordWithQuestion
 import com.at210co60.tiku.data.repository.QuestionRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +55,8 @@ fun WrongQuestionsScreen(
     repository: QuestionRepository,
     onBack: () -> Unit,
 ) {
-    val wrongRecords by repository.getWrongRecords().collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
+    val wrongRecords by repository.getWrongRecordsWithQuestions().collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -114,11 +118,13 @@ fun WrongQuestionsScreen(
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
                 }
-                items(wrongRecords, key = { it.id }) { record ->
+                items(wrongRecords, key = { it.record.id }) { record ->
                     WrongQuestionCard(
                         record = record,
                         onDelete = {
-                            // TODO: 实现删除错题记录功能
+                            scope.launch {
+                                repository.deleteWrongRecord(record.record.questionId)
+                            }
                         },
                     )
                 }
@@ -132,10 +138,24 @@ fun WrongQuestionsScreen(
 
 @Composable
 private fun WrongQuestionCard(
-    record: AnswerRecord,
+    record: WrongRecordWithQuestion,
     onDelete: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+
+    val typeLabel = when (record.questionType) {
+        QuestionType.SINGLE_CHOICE -> "单选"
+        QuestionType.MULTI_CHOICE -> "多选"
+        QuestionType.TRUE_FALSE -> "判断"
+        QuestionType.SHORT_ANSWER -> "简答"
+    }
+
+    val typeColor = when (record.questionType) {
+        QuestionType.SINGLE_CHOICE -> MaterialTheme.colorScheme.primary
+        QuestionType.MULTI_CHOICE -> MaterialTheme.colorScheme.secondary
+        QuestionType.TRUE_FALSE -> MaterialTheme.colorScheme.tertiary
+        QuestionType.SHORT_ANSWER -> MaterialTheme.colorScheme.outline
+    }
 
     Card(
         modifier = Modifier
@@ -166,11 +186,12 @@ private fun WrongQuestionCard(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "第 ${record.id} 题",
+                        text = record.questionTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
-                        maxLines = 1,
+                        maxLines = if (expanded) Int.MAX_VALUE else 2,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
                     )
                 }
                 IconButton(
@@ -190,26 +211,22 @@ private fun WrongQuestionCard(
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                val modeText = when (record.practiceMode) {
-                    "sequential" -> "顺序练习"
-                    "random" -> "随机练习"
-                    "exam" -> "模拟考试"
-                    "wrong" -> "错题复习"
-                    else -> record.practiceMode
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(typeColor.copy(alpha = 0.15f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = typeLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = typeColor,
+                    )
                 }
                 Text(
-                    text = modeText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "•",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = formatTime(record.answeredAt),
+                    text = formatTime(record.record.answeredAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -217,16 +234,53 @@ private fun WrongQuestionCard(
 
             if (expanded) {
                 Spacer(modifier = Modifier.height(12.dp))
+
+                if (record.questionOptions.isNotEmpty()) {
+                    Text(
+                        text = "选项：",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    record.questionOptions.forEach { option ->
+                        val isCorrectOption = option in record.questionAnswers
+                        Text(
+                            text = option,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isCorrectOption) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (isCorrectOption) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(start = 8.dp, top = 2.dp),
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 Text(
-                    text = "你的答案：${record.userAnswer}",
+                    text = "你的答案：${record.record.userAnswer}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
                 Text(
-                    text = if (record.isCorrect) "✓ 正确" else "✗ 错误",
+                    text = "正确答案：${record.questionAnswers.joinToString(", ")}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (record.isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
                 )
+
+                if (record.questionExplanation.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(
+                            text = record.questionExplanation,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp),
+                        )
+                    }
+                }
             }
         }
     }

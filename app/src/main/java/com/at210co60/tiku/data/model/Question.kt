@@ -5,7 +5,7 @@ data class Question(
     val title: String,
     val type: QuestionType,
     val options: List<String> = emptyList(),
-    val answer: String,
+    val answers: List<String>,
     val explanation: String = "",
     val tags: List<String> = emptyList(),
 )

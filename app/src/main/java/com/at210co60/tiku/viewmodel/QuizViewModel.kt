@@ -22,13 +22,12 @@ class QuizViewModel(
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
-    private val _selectedAnswer = MutableStateFlow<String?>(null)
-    val selectedAnswer: StateFlow<String?> = _selectedAnswer.asStateFlow()
+    private val _selectedAnswers = MutableStateFlow<Set<String>>(emptySet())
+    val selectedAnswers: StateFlow<Set<String>> = _selectedAnswers.asStateFlow()
 
     private val _isAnswered = MutableStateFlow(false)
     val isAnswered: StateFlow<Boolean> = _isAnswered.asStateFlow()
 
-    // Track quiz completion and statistics
     private val _quizCompleted = MutableStateFlow(false)
     val quizCompleted: StateFlow<Boolean> = _quizCompleted.asStateFlow()
 
@@ -38,7 +37,6 @@ class QuizViewModel(
     private val _totalAnswered = MutableStateFlow(0)
     val totalAnswered: StateFlow<Int> = _totalAnswered.asStateFlow()
 
-    // Load questions based on mode and bankId
     private val questionsFlow = when (mode) {
         "random", "exam" -> repository.getRandomQuestionsByBank(bankId, 20)
         else -> repository.getQuestionsByBank(bankId)
@@ -63,10 +61,24 @@ class QuizViewModel(
 
     fun selectAnswer(answer: String) {
         if (_isAnswered.value) return
-        _selectedAnswer.value = answer
-        _isAnswered.value = true
+        val question = currentQuestion.value ?: return
+        if (question.type == QuestionType.MULTI_CHOICE) {
+            _selectedAnswers.value = _selectedAnswers.value.toMutableSet().apply {
+                if (contains(answer)) remove(answer) else add(answer)
+            }
+        } else {
+            _selectedAnswers.value = setOf(answer)
+            _isAnswered.value = true
+            _totalAnswered.value++
+            if (isCorrect()) {
+                _correctCount.value++
+            }
+        }
+    }
 
-        // Update statistics
+    fun confirmMultiChoiceAnswer() {
+        if (_isAnswered.value) return
+        _isAnswered.value = true
         _totalAnswered.value++
         if (isCorrect()) {
             _correctCount.value++
@@ -76,10 +88,9 @@ class QuizViewModel(
     fun nextQuestion() {
         if (!isLastQuestion.value) {
             _currentIndex.value++
-            _selectedAnswer.value = null
+            _selectedAnswers.value = emptySet()
             _isAnswered.value = false
         } else {
-            // Already at last question, finish quiz
             _quizCompleted.value = true
         }
     }
@@ -87,7 +98,7 @@ class QuizViewModel(
     fun previousQuestion() {
         if (_currentIndex.value > 0) {
             _currentIndex.value--
-            _selectedAnswer.value = null
+            _selectedAnswers.value = emptySet()
             _isAnswered.value = false
         }
     }
@@ -98,7 +109,7 @@ class QuizViewModel(
 
     fun resetQuiz() {
         _currentIndex.value = 0
-        _selectedAnswer.value = null
+        _selectedAnswers.value = emptySet()
         _isAnswered.value = false
         _quizCompleted.value = false
         _correctCount.value = 0
@@ -107,15 +118,19 @@ class QuizViewModel(
 
     fun isCorrect(): Boolean {
         val question = currentQuestion.value ?: return false
-        val selected = _selectedAnswer.value ?: return false
+        val selected = _selectedAnswers.value
+        if (selected.isEmpty()) return false
         return when (question.type) {
+            QuestionType.MULTI_CHOICE -> {
+                selected.size == question.answers.size && selected.containsAll(question.answers)
+            }
             QuestionType.TRUE_FALSE -> {
-                selected.equals(question.answer, ignoreCase = true)
+                selected.firstOrNull()?.equals(question.answers.firstOrNull(), ignoreCase = true) ?: false
             }
             QuestionType.SHORT_ANSWER -> {
-                selected.equals(question.answer, ignoreCase = true)
+                selected.firstOrNull()?.equals(question.answers.firstOrNull(), ignoreCase = true) ?: false
             }
-            else -> selected == question.answer
+            else -> selected.firstOrNull() == question.answers.firstOrNull()
         }
     }
 

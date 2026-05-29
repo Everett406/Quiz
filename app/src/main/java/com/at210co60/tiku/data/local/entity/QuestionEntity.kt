@@ -24,7 +24,7 @@ data class QuestionEntity(
     val title: String,
     val type: String, // "SINGLE_CHOICE", "MULTI_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"
     val options: String, // JSON array string
-    val answer: String,
+    val answers: String, // JSON array string
     val explanation: String = "",
     val tags: String = "", // JSON array string
 )
