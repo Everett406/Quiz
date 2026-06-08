@@ -46,8 +46,6 @@ import com.at210co60.tiku.data.repository.FontSize
 import com.at210co60.tiku.data.repository.QuestionRepository
 import com.at210co60.tiku.data.repository.SettingsRepository
 import com.at210co60.tiku.data.repository.ThemeMode
-import com.at210co60.tiku.ui.components.WarmButton
-import com.at210co60.tiku.ui.components.WarmSecondaryButton
 import com.at210co60.tiku.ui.components.WarmTopBar
 import com.at210co60.tiku.ui.theme.AccentError
 import com.at210co60.tiku.ui.theme.AccentPrimary
