@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 val WarmWhite = Color(0xFFFAFAF8)          // Primary background
 val WarmCream = Color(0xFFF5F3EF)         // Card backgrounds
 val WarmGray = Color(0xFFEFECEA)          // Section dividers
-val Surface = Color(0xFFFFFFFF)            // Elevated surfaces
+val SurfaceColor = Color(0xFFFFFFFF)            // Elevated surfaces
 
 // ============ Warm Text Colors ============
 val TextPrimary = Color(0xFF1A1A1A)       // Headings, primary content
@@ -41,7 +41,7 @@ val CardBlue = AccentSecondary
 val CardGreen = Color(0xFFD4E8DC)
 val CardYellow = AccentSecondary
 val CardPink = Color(0xFFF5E0DE)
-val SurfaceLight = Surface
+val SurfaceLight = SurfaceColor
 val SurfaceDark = DarkSurface
 val SurfaceVariantLight = WarmCream
 val SurfaceVariantDark = Color(0xFF333333)

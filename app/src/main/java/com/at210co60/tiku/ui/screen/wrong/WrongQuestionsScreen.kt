@@ -56,7 +56,7 @@ import com.at210co60.tiku.ui.theme.AccentPrimary
 import com.at210co60.tiku.ui.theme.AccentSuccess
 import com.at210co60.tiku.ui.theme.Radius
 import com.at210co60.tiku.ui.theme.Spacing
-import com.at210co60.tiku.ui.theme.Surface
+import com.at210co60.tiku.ui.theme.SurfaceColor
 import com.at210co60.tiku.ui.theme.TextPrimary
 import com.at210co60.tiku.ui.theme.TextSecondary
 import com.at210co60.tiku.ui.theme.WarmCream
@@ -155,7 +155,7 @@ private fun WrongQuestionCard(
             .animateContentSize()
             .clickable { expanded = !expanded },
         shape = RoundedCornerShape(Radius.md),
-        colors = CardDefaults.cardColors(containerColor = Surface),
+        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(

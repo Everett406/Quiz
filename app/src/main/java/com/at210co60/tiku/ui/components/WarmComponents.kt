@@ -37,7 +37,6 @@ import com.at210co60.tiku.ui.theme.AccentPrimary
 import com.at210co60.tiku.ui.theme.AccentSuccess
 import com.at210co60.tiku.ui.theme.Radius
 import com.at210co60.tiku.ui.theme.Spacing
-import com.at210co60.tiku.ui.theme.Surface
 import com.at210co60.tiku.ui.theme.TextPrimary
 import com.at210co60.tiku.ui.theme.TextSecondary
 import com.at210co60.tiku.ui.theme.WarmCream
