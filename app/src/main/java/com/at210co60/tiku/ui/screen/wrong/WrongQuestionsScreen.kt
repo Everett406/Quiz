@@ -1,5 +1,6 @@
 package com.at210co60.tiku.ui.screen.wrong
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +47,20 @@ import androidx.compose.ui.unit.dp
 import com.at210co60.tiku.data.model.QuestionType
 import com.at210co60.tiku.data.model.WrongRecordWithQuestion
 import com.at210co60.tiku.data.repository.QuestionRepository
+import com.at210co60.tiku.ui.components.WarmBadge
+import com.at210co60.tiku.ui.components.WarmEmptyState
+import com.at210co60.tiku.ui.components.WarmTopBar
+import com.at210co60.tiku.ui.theme.AccentError
+import com.at210co60.tiku.ui.theme.AccentInfo
+import com.at210co60.tiku.ui.theme.AccentPrimary
+import com.at210co60.tiku.ui.theme.AccentSuccess
+import com.at210co60.tiku.ui.theme.Radius
+import com.at210co60.tiku.ui.theme.Spacing
+import com.at210co60.tiku.ui.theme.Surface
+import com.at210co60.tiku.ui.theme.TextPrimary
+import com.at210co60.tiku.ui.theme.TextSecondary
+import com.at210co60.tiku.ui.theme.WarmCream
+import com.at210co60.tiku.ui.theme.WarmWhite
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,15 +74,12 @@ fun WrongQuestionsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("错题本") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
+            WarmTopBar(
+                title = "错题本",
+                onBack = onBack,
             )
         },
+        containerColor = WarmWhite,
     ) { padding ->
         if (wrongRecords.isEmpty()) {
             Box(
@@ -77,45 +88,26 @@ fun WrongQuestionsScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Icon(
-                        Icons.Default.LibraryBooks,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "暂无错题记录",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "去刷题，答错的题目会自动收录到这里",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                WarmEmptyState(
+                    icon = Icons.Default.LibraryBooks,
+                    title = "暂无错题记录",
+                    subtitle = "去刷题，答错的题目会自动收录到这里",
+                )
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(horizontal = Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 item {
                     Text(
                         text = "共 ${wrongRecords.size} 道错题",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = TextSecondary,
+                        modifier = Modifier.padding(vertical = Spacing.sm),
                     )
                 }
                 items(wrongRecords, key = { it.record.id }) { record ->
@@ -129,7 +121,7 @@ fun WrongQuestionsScreen(
                     )
                 }
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
                 }
             }
         }
@@ -144,30 +136,32 @@ private fun WrongQuestionCard(
     var expanded by remember { mutableStateOf(false) }
 
     val typeLabel = when (record.questionType) {
-        QuestionType.SINGLE_CHOICE -> "单选"
-        QuestionType.MULTI_CHOICE -> "多选"
-        QuestionType.TRUE_FALSE -> "判断"
-        QuestionType.SHORT_ANSWER -> "简答"
+        QuestionType.SINGLE_CHOICE -> "单选题"
+        QuestionType.MULTI_CHOICE -> "多选题"
+        QuestionType.TRUE_FALSE -> "判断题"
+        QuestionType.SHORT_ANSWER -> "简答题"
     }
 
     val typeColor = when (record.questionType) {
-        QuestionType.SINGLE_CHOICE -> MaterialTheme.colorScheme.primary
-        QuestionType.MULTI_CHOICE -> MaterialTheme.colorScheme.secondary
-        QuestionType.TRUE_FALSE -> MaterialTheme.colorScheme.tertiary
-        QuestionType.SHORT_ANSWER -> MaterialTheme.colorScheme.outline
+        QuestionType.SINGLE_CHOICE -> AccentPrimary
+        QuestionType.MULTI_CHOICE -> AccentSuccess
+        QuestionType.TRUE_FALSE -> AccentInfo
+        QuestionType.SHORT_ANSWER -> TextSecondary
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize()
             .clickable { expanded = !expanded },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Radius.md),
+        colors = CardDefaults.cardColors(containerColor = Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.md),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -182,13 +176,14 @@ private fun WrongQuestionCard(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error),
+                            .background(AccentError),
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(Spacing.sm))
                     Text(
                         text = record.questionTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
+                        color = TextPrimary,
                         maxLines = if (expanded) Int.MAX_VALUE else 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
@@ -196,89 +191,126 @@ private fun WrongQuestionCard(
                 }
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "删除",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = TextSecondary,
                         modifier = Modifier.size(18.dp),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.sm))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(typeColor.copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = typeLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = typeColor,
-                    )
-                }
+                WarmBadge(
+                    text = typeLabel,
+                    isSuccess = record.questionType == QuestionType.MULTI_CHOICE,
+                )
                 Text(
                     text = formatTime(record.record.answeredAt),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = TextSecondary,
                 )
             }
 
             if (expanded) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Spacing.md))
 
+                // Options
                 if (record.questionOptions.isNotEmpty()) {
                     Text(
-                        text = "选项：",
+                        text = "选项",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = TextSecondary,
                     )
+                    Spacer(modifier = Modifier.height(Spacing.xs))
                     record.questionOptions.forEach { option ->
                         val isCorrectOption = option in record.questionAnswers
-                        Text(
-                            text = option,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isCorrectOption) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (isCorrectOption) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.padding(start = 8.dp, top = 2.dp),
-                        )
+                        Row(
+                            modifier = Modifier.padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = if (isCorrectOption) "✓ " else "  ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isCorrectOption) AccentSuccess else TextPrimary,
+                                fontWeight = if (isCorrectOption) FontWeight.Bold else FontWeight.Normal,
+                            )
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isCorrectOption) AccentSuccess else TextPrimary,
+                                fontWeight = if (isCorrectOption) FontWeight.Bold else FontWeight.Normal,
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.md))
                 }
 
-                Text(
-                    text = "你的答案：${record.record.userAnswer}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                Text(
-                    text = "正确答案：${record.questionAnswers.joinToString(", ")}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                )
+                // Answer comparison
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = AccentError.copy(alpha = 0.08f),
+                    ),
+                    shape = RoundedCornerShape(Radius.sm),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(Spacing.sm)) {
+                        Text(
+                            text = "你的答案：${record.record.userAnswer}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AccentError,
+                        )
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = AccentSuccess.copy(alpha = 0.08f),
+                    ),
+                    shape = RoundedCornerShape(Radius.sm),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(Spacing.sm)) {
+                        Text(
+                            text = "正确答案：${record.questionAnswers.joinToString(", ")}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AccentSuccess,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+
+                // Explanation
                 if (record.questionExplanation.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.md))
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            containerColor = WarmCream,
                         ),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(Radius.sm),
                     ) {
-                        Text(
-                            text = record.questionExplanation,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(12.dp),
-                        )
+                        Column(modifier = Modifier.padding(Spacing.sm)) {
+                            Text(
+                                text = "解析",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextSecondary,
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.xs))
+                            Text(
+                                text = record.questionExplanation,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextPrimary,
+                            )
+                        }
                     }
                 }
             }

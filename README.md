@@ -163,7 +163,7 @@ Quiz/
 
 ## 🚀 功能规划
 
-### 当前已实现（v1.1.3）
+### 当前已实现（v1.3.0）
 
 - [x] 项目基础框架搭建（Kotlin + Jetpack Compose）
 - [x] 题库列表页（品牌标题 + 导入按钮 + 题库卡片列表 + 设置入口）
@@ -179,6 +179,7 @@ Quiz/
 - [x] Repository 数据层（Entity ↔ Domain Model 转换，三 DAO 模式）
 - [x] 答题记录持久化（AnswerRecord 表，答错自动收录到错题本）
 - [x] 自定义应用图标（3D 堆叠卡片 + 绿色对勾）
+- [x] **UI 全面重构**：暖色极简设计语言（米白背景、琥珀主色调）、统一组件库 WarmComponents、12dp 圆角规范、大量留白 iOS 风格
 
 ### 题型支持
 
@@ -298,6 +299,7 @@ View (Composable Screen)
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v1.3.0 | 2026-06-08 | UI 全面重构：暖色极简设计语言（米白背景 WarmWhite #FAFAF8、琥珀主色调 AccentPrimary #C4A574）、新建统一组件库 WarmComponents、重写所有页面（HomeScreen/QuizPracticeScreen/WrongQuestionsScreen/SettingsScreen/QuizDetailScreen）、12dp 圆角规范、大量留白 iOS 风格 |
 | v1.2.0 | 2026-05-29 | 重大修复：多选题支持多选并正确判断；简答题显示参考答案；手动确认进入下一题；错题本显示完整题目内容、选项、正确答案和解析；支持删除错题；设置页增加关于和清除数据功能 |
 | v1.1.3 | 2026-05-27 | 刷题体验优化：答完即自动进入下一题（1.5秒后），答题完成显示正确率统计；更新应用图标为文档+对勾风格 |
 | v1.1.2 | 2026-05-27 | 数据层重构：QuestionBank/Question/AnswerRecord 三表关联；设置页 DataStore 持久化；错题本接入真实数据；自定义应用图标 |

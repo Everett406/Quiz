@@ -1,5 +1,6 @@
 package com.at210co60.tiku.ui.screen.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +46,18 @@ import com.at210co60.tiku.data.repository.FontSize
 import com.at210co60.tiku.data.repository.QuestionRepository
 import com.at210co60.tiku.data.repository.SettingsRepository
 import com.at210co60.tiku.data.repository.ThemeMode
+import com.at210co60.tiku.ui.components.WarmButton
+import com.at210co60.tiku.ui.components.WarmSecondaryButton
+import com.at210co60.tiku.ui.components.WarmTopBar
+import com.at210co60.tiku.ui.theme.AccentError
+import com.at210co60.tiku.ui.theme.AccentPrimary
+import com.at210co60.tiku.ui.theme.Radius
+import com.at210co60.tiku.ui.theme.Spacing
+import com.at210co60.tiku.ui.theme.Surface
+import com.at210co60.tiku.ui.theme.TextPrimary
+import com.at210co60.tiku.ui.theme.TextSecondary
+import com.at210co60.tiku.ui.theme.WarmCream
+import com.at210co60.tiku.ui.theme.WarmWhite
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,25 +76,25 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("设置") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
+            WarmTopBar(
+                title = "设置",
+                onBack = onBack,
             )
         },
+        containerColor = WarmWhite,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = Spacing.lg)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            SettingCard {
+            Spacer(modifier = Modifier.height(Spacing.sm))
+
+            // Appearance Section
+            SettingsSection(title = "外观") {
                 SettingItem(
                     label = "主题",
                     options = listOf(
@@ -93,7 +107,7 @@ fun SettingsScreen(
                     valueToLabel = { it.first },
                     valueToCompare = { it.second },
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.md))
                 SettingItem(
                     label = "字号",
                     options = listOf(
@@ -109,59 +123,49 @@ fun SettingsScreen(
                 )
             }
 
-            SettingCard {
-                Column {
+            // Data Management Section
+            SettingsSection(title = "数据管理") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(Radius.md))
+                        .background(AccentError.copy(alpha = 0.08f))
+                        .clickable { showClearDataDialog = true }
+                        .padding(vertical = Spacing.md),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Text(
-                        text = "数据管理",
-                        style = MaterialTheme.typography.labelLarge,
+                        text = "清除所有数据",
+                        color = AccentError,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.errorContainer)
-                            .clickable { showClearDataDialog = true }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "清除所有数据",
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
                 }
             }
 
-            SettingCard {
-                Column {
-                    Text(
-                        text = "关于",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Tiku 题库",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "版本 v1.2.0",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "一款面向学生的 Android 刷题应用，支持在线刷题、模拟考试、错题记录与学习统计。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            // About Section
+            SettingsSection(title = "关于") {
+                Text(
+                    text = "Tiku 题库",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                Text(
+                    text = "版本 v1.3.0",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                )
+                Spacer(modifier = Modifier.height(Spacing.sm))
+                Text(
+                    text = "一款面向学生的 Android 刷题应用，支持在线刷题、模拟考试、错题记录与学习统计。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                )
             }
+
+            Spacer(modifier = Modifier.height(Spacing.xl))
         }
     }
 
@@ -179,7 +183,7 @@ fun SettingsScreen(
                         showClearDataDialog = false
                     },
                 ) {
-                    Text("确认清除", color = MaterialTheme.colorScheme.error)
+                    Text("确认清除", color = AccentError)
                 }
             },
             dismissButton = {
@@ -192,14 +196,24 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingCard(content: @Composable () -> Unit) {
+private fun SettingsSection(
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-            .padding(16.dp),
+            .clip(RoundedCornerShape(Radius.md))
+            .border(BorderStroke(1.dp, WarmCream), RoundedCornerShape(Radius.md))
+            .padding(Spacing.md),
     ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        Spacer(modifier = Modifier.height(Spacing.md))
         content()
     }
 }
@@ -217,14 +231,14 @@ private fun <T> SettingItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
+            color = TextSecondary,
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.sm))
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             options.forEach { option ->
-                SegmentedButton(
+                SelectableChip(
                     text = valueToLabel(option),
                     isSelected = valueToCompare(option) == selectedValue,
                     onClick = { onSelect(valueToCompare(option)) },
@@ -235,36 +249,27 @@ private fun <T> SettingItem(
 }
 
 @Composable
-private fun SegmentedButton(
+private fun SelectableChip(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        Color.Transparent
-    }
-    val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-    val borderColor = MaterialTheme.colorScheme.outline
+    val backgroundColor = if (isSelected) AccentPrimary else WarmCream
+    val textColor = if (isSelected) Color.White else TextPrimary
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(Radius.sm))
             .background(backgroundColor)
-            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             color = textColor,
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
         )
     }
 }

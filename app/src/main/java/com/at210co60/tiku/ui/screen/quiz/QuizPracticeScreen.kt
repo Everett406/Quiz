@@ -1,6 +1,6 @@
 package com.at210co60.tiku.ui.screen.quiz
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,20 +17,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +46,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.at210co60.tiku.data.model.QuestionType
 import com.at210co60.tiku.data.repository.QuestionRepository
+import com.at210co60.tiku.ui.components.WarmButton
+import com.at210co60.tiku.ui.components.WarmEmptyState
+import com.at210co60.tiku.ui.components.WarmProgressBar
+import com.at210co60.tiku.ui.components.WarmSecondaryButton
+import com.at210co60.tiku.ui.components.WarmTopBar
+import com.at210co60.tiku.ui.theme.AccentError
+import com.at210co60.tiku.ui.theme.AccentPrimary
+import com.at210co60.tiku.ui.theme.AccentSuccess
+import com.at210co60.tiku.ui.theme.Radius
+import com.at210co60.tiku.ui.theme.Spacing
+import com.at210co60.tiku.ui.theme.Surface
+import com.at210co60.tiku.ui.theme.TextPrimary
+import com.at210co60.tiku.ui.theme.TextSecondary
+import com.at210co60.tiku.ui.theme.WarmCream
+import com.at210co60.tiku.ui.theme.WarmWhite
 import com.at210co60.tiku.viewmodel.QuizViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +85,12 @@ fun QuizPracticeScreen(
     val correctCount by viewModel.correctCount.collectAsState()
     val totalAnswered by viewModel.totalAnswered.collectAsState()
 
+    val titleText = when (mode) {
+        "random" -> "随机刷题"
+        "exam" -> "模拟考试"
+        else -> "顺序刷题"
+    }
+
     LaunchedEffect(isAnswered, selectedAnswers, currentQuestion) {
         if (isAnswered && selectedAnswers.isNotEmpty() && currentQuestion != null) {
             val userAnswer = when (currentQuestion!!.type) {
@@ -88,22 +109,12 @@ fun QuizPracticeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    val titleText = when (mode) {
-                        "random" -> "随机刷题"
-                        "exam" -> "模拟考试"
-                        else -> "顺序刷题"
-                    }
-                    Text(titleText)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
+            WarmTopBar(
+                title = titleText,
+                onBack = onBack,
             )
         },
+        containerColor = WarmWhite,
     ) { padding ->
         when {
             quizCompleted -> {
@@ -123,13 +134,17 @@ fun QuizPracticeScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     if (totalQuestions == 0) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("暂无题目，请先导入题库", style = MaterialTheme.typography.bodyLarge)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = onBack) {
-                                Text("返回")
-                            }
-                        }
+                        WarmEmptyState(
+                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            title = "暂无题目",
+                            subtitle = "请先导入题库",
+                            action = {
+                                WarmSecondaryButton(
+                                    text = "返回",
+                                    onClick = onBack,
+                                )
+                            },
+                        )
                     } else {
                         Text("加载中...", style = MaterialTheme.typography.bodyLarge)
                     }
@@ -140,29 +155,29 @@ fun QuizPracticeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(16.dp)
+                        .padding(horizontal = Spacing.lg)
                         .verticalScroll(rememberScrollState()),
                 ) {
+                    Spacer(modifier = Modifier.height(Spacing.md))
+
+                    // Progress
                     Text(
                         text = "${currentIndex + 1} / $totalQuestions",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = TextSecondary,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.sm))
 
-                    LinearProgressIndicator(
-                        progress = { if (totalQuestions > 0) (currentIndex + 1).toFloat() / totalQuestions else 0f },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp),
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    WarmProgressBar(
+                        progress = if (totalQuestions > 0) (currentIndex + 1).toFloat() / totalQuestions else 0f,
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
 
+                    // Question Type Badge
                     val typeLabel = when (currentQuestion!!.type) {
                         QuestionType.SINGLE_CHOICE -> "单选题"
                         QuestionType.MULTI_CHOICE -> "多选题"
@@ -172,24 +187,26 @@ fun QuizPracticeScreen(
                     Text(
                         text = typeLabel,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxWidth(),
+                        color = AccentPrimary,
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.sm))
 
+                    // Question Title
                     Text(
                         text = currentQuestion!!.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
 
+                    // Options
                     when (currentQuestion!!.type) {
                         QuestionType.SINGLE_CHOICE -> {
                             currentQuestion!!.options.forEach { option ->
-                                OptionCard(
+                                QuizOptionItem(
                                     text = option,
                                     isSelected = option in selectedAnswers,
                                     isCorrect = isAnswered && option == currentQuestion!!.answers.firstOrNull(),
@@ -197,12 +214,12 @@ fun QuizPracticeScreen(
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer(option) },
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(Spacing.sm))
                             }
                         }
                         QuestionType.MULTI_CHOICE -> {
                             currentQuestion!!.options.forEach { option ->
-                                OptionCard(
+                                QuizOptionItem(
                                     text = option,
                                     isSelected = option in selectedAnswers,
                                     isCorrect = isAnswered && option in currentQuestion!!.answers,
@@ -210,25 +227,24 @@ fun QuizPracticeScreen(
                                     isEnabled = !isAnswered,
                                     onClick = { viewModel.selectAnswer(option) },
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(Spacing.sm))
                             }
                             if (!isAnswered) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(
+                                Spacer(modifier = Modifier.height(Spacing.sm))
+                                WarmButton(
+                                    text = "确认答案",
                                     onClick = { viewModel.confirmMultiChoiceAnswer() },
                                     enabled = selectedAnswers.isNotEmpty(),
                                     modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text("确认答案")
-                                }
+                                )
                             }
                         }
                         QuestionType.TRUE_FALSE -> {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                             ) {
-                                OptionCard(
+                                QuizOptionItem(
                                     text = "正确",
                                     isSelected = "true" in selectedAnswers,
                                     isCorrect = isAnswered && currentQuestion!!.answers.firstOrNull()?.equals("true", ignoreCase = true) == true && "true" in selectedAnswers,
@@ -237,7 +253,7 @@ fun QuizPracticeScreen(
                                     onClick = { viewModel.selectAnswer("true") },
                                     modifier = Modifier.weight(1f),
                                 )
-                                OptionCard(
+                                QuizOptionItem(
                                     text = "错误",
                                     isSelected = "false" in selectedAnswers,
                                     isCorrect = isAnswered && currentQuestion!!.answers.firstOrNull()?.equals("false", ignoreCase = true) == true && "false" in selectedAnswers,
@@ -257,119 +273,185 @@ fun QuizPracticeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = !isAnswered,
                                 singleLine = true,
+                                shape = RoundedCornerShape(Radius.md),
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(Spacing.sm))
                             if (!isAnswered) {
-                                Button(
+                                WarmButton(
+                                    text = "提交答案",
                                     onClick = { viewModel.selectAnswer(inputText) },
                                     enabled = inputText.isNotBlank(),
                                     modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text("提交答案")
-                                }
+                                )
                             }
                         }
                     }
 
                     if (isAnswered) {
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(Spacing.lg))
+
+                        // Result Card
                         val isCorrect = viewModel.isCorrect()
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isCorrect)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.errorContainer,
+                                containerColor = if (isCorrect) AccentSuccess.copy(alpha = 0.1f) else AccentError.copy(alpha = 0.1f),
                             ),
+                            shape = RoundedCornerShape(Radius.md),
+                            border = BorderStroke(1.dp, if (isCorrect) AccentSuccess else AccentError),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Column(modifier = Modifier.padding(Spacing.md)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Icons.Default.CheckCircle,
+                                        imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
                                         contentDescription = null,
-                                        tint = if (isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                        tint = if (isCorrect) AccentSuccess else AccentError,
                                         modifier = Modifier.size(24.dp),
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(Spacing.sm))
                                     Text(
                                         text = if (isCorrect) "回答正确！" else "回答错误",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (isCorrect)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onErrorContainer,
+                                        color = if (isCorrect) AccentSuccess else AccentError,
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(Spacing.sm))
                                 Text(
                                     text = "正确答案：${currentQuestion!!.answers.joinToString(", ")}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isCorrect)
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.onErrorContainer,
+                                    color = TextPrimary,
                                 )
                             }
                         }
 
                         if (currentQuestion!!.explanation.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(Spacing.sm))
                             Card(
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    containerColor = WarmCream,
                                 ),
+                                shape = RoundedCornerShape(Radius.md),
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
+                                Column(modifier = Modifier.padding(Spacing.md)) {
                                     Text(
                                         text = "解析",
                                         style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = TextSecondary,
                                     )
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.xs))
                                     Text(
                                         text = currentQuestion!!.explanation,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(Spacing.lg))
 
+                        // Navigation Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                         ) {
                             if (currentIndex > 0) {
-                                OutlinedButton(
+                                WarmSecondaryButton(
+                                    text = "上一题",
                                     onClick = { viewModel.previousQuestion() },
                                     modifier = Modifier.weight(1f),
-                                ) {
-                                    Text("上一题")
-                                }
+                                )
                             }
                             if (isLastQuestion) {
-                                Button(
+                                WarmButton(
+                                    text = "查看结果",
                                     onClick = { viewModel.finishQuiz() },
                                     modifier = Modifier.weight(1f),
-                                ) {
-                                    Text("查看结果")
-                                }
+                                )
                             } else {
-                                Button(
+                                WarmButton(
+                                    text = "下一题",
                                     onClick = { viewModel.nextQuestion() },
                                     modifier = Modifier.weight(1f),
-                                ) {
-                                    Text("下一题")
-                                }
+                                )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuizOptionItem(
+    text: String,
+    isSelected: Boolean,
+    isCorrect: Boolean,
+    isWrong: Boolean,
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val backgroundColor = when {
+        isCorrect -> AccentSuccess.copy(alpha = 0.12f)
+        isWrong -> AccentError.copy(alpha = 0.12f)
+        isSelected -> AccentPrimary.copy(alpha = 0.12f)
+        else -> Surface
+    }
+
+    val borderColor = when {
+        isCorrect -> AccentSuccess
+        isWrong -> AccentError
+        isSelected -> AccentPrimary
+        else -> WarmCream
+    }
+
+    val textColor = when {
+        isCorrect -> AccentSuccess
+        isWrong -> AccentError
+        else -> TextPrimary
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(Radius.md),
+        color = backgroundColor,
+        border = BorderStroke(
+            width = if (isSelected || isCorrect || isWrong) 1.5.dp else 1.dp,
+            color = borderColor,
+        ),
+        onClick = if (isEnabled) onClick else null,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = textColor,
+                modifier = Modifier.weight(1f),
+            )
+            if (isCorrect) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "正确",
+                    tint = AccentSuccess,
+                    modifier = Modifier.size(20.dp),
+                )
+            } else if (isWrong) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "错误",
+                    tint = AccentError,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }
@@ -388,126 +470,75 @@ private fun QuizCompletedScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(Spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "\uD83C\uDF89",
+            text = "🎉",
             style = MaterialTheme.typography.displayLarge,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.lg))
 
         Text(
             text = "刷题完成！",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
+            color = TextPrimary,
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Spacing.xl))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor = AccentPrimary.copy(alpha = 0.1f),
             ),
+            shape = RoundedCornerShape(Radius.lg),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(Spacing.lg),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "正确率",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = TextSecondary,
                 )
+                Spacer(modifier = Modifier.height(Spacing.xs))
                 Text(
                     text = "$accuracy%",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = AccentPrimary,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.sm))
                 Text(
                     text = "正确 $correctCount / 共 $totalAnswered 题",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = TextPrimary,
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Spacing.xl))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            OutlinedButton(
+            WarmSecondaryButton(
+                text = "返回题库",
                 onClick = onBack,
                 modifier = Modifier.weight(1f),
-            ) {
-                Text("返回题库")
-            }
-            Button(
+            )
+            WarmButton(
+                text = "再来一次",
                 onClick = onRestart,
                 modifier = Modifier.weight(1f),
-            ) {
-                Text("再来一次")
-            }
-        }
-    }
-}
-
-@Composable
-private fun OptionCard(
-    text: String,
-    isSelected: Boolean,
-    isCorrect: Boolean,
-    isWrong: Boolean,
-    isEnabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val backgroundColor = when {
-        isCorrect -> MaterialTheme.colorScheme.primaryContainer
-        isWrong -> MaterialTheme.colorScheme.errorContainer
-        isSelected -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surface
-    }
-    val borderColor = when {
-        isCorrect -> MaterialTheme.colorScheme.primary
-        isWrong -> MaterialTheme.colorScheme.error
-        isSelected -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.outline
-    }
-
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        enabled = isEnabled,
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = borderColor,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-            }
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }

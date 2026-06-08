@@ -1,90 +1,88 @@
 package com.at210co60.tiku.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.at210co60.tiku.data.repository.FontSize
 
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryLight,
-    onPrimary = OnPrimaryLight,
-    primaryContainer = CardBlue,
-    secondary = Teal40,
+private val WarmLightColorScheme = lightColorScheme(
+    primary = AccentPrimary,
+    onPrimary = Color.White,
+    primaryContainer = AccentSecondary,
+    onPrimaryContainer = TextPrimary,
+    secondary = AccentSuccess,
     onSecondary = Color.White,
-    tertiary = BlueGrey40,
-    background = BackgroundLight,
-    onBackground = Color(0xFF1C1B1F),
-    surface = SurfaceLight,
-    onSurface = Color(0xFF1C1B1F),
-    surfaceVariant = SurfaceVariantLight,
-    onSurfaceVariant = Color(0xFF49454F),
-    outline = OutlineLight,
-    error = ErrorLight,
+    secondaryContainer = Color(0xFFD4E8DC),
+    onSecondaryContainer = TextPrimary,
+    tertiary = AccentInfo,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFD4E4E6),
+    onTertiaryContainer = TextPrimary,
+    error = AccentError,
     onError = Color.White,
+    errorContainer = Color(0xFFF5E0DE),
+    onErrorContainer = TextPrimary,
+    background = WarmWhite,
+    onBackground = TextPrimary,
+    surface = Surface,
+    onSurface = TextPrimary,
+    surfaceVariant = WarmCream,
+    onSurfaceVariant = TextSecondary,
+    outline = Border,
+    outlineVariant = Color(0xFFD8D4CE),
+    scrim = Color(0x52000000),
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryDark,
-    onPrimary = OnPrimaryDark,
-    primaryContainer = Color(0xFF004880),
-    secondary = Teal80,
-    onSecondary = Color(0xFF003731),
-    tertiary = BlueGrey80,
-    background = BackgroundDark,
-    onBackground = Color(0xFFE6E1E5),
-    surface = SurfaceDark,
-    onSurface = Color(0xFFE6E1E5),
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = Color(0xFFCAC4D0),
-    outline = OutlineDark,
-    error = ErrorDark,
+private val WarmDarkColorScheme = darkColorScheme(
+    primary = DarkAccentPrimary,
+    onPrimary = DarkBackground,
+    primaryContainer = Color(0xFF5C4A2A),
+    onPrimaryContainer = DarkTextPrimary,
+    secondary = Color(0xFF9BBFA1),
+    onSecondary = Color(0xFF1A3A1F),
+    secondaryContainer = Color(0xFF2A5030),
+    onSecondaryContainer = DarkTextPrimary,
+    tertiary = Color(0xFFA0C4C7),
+    onTertiary = Color(0xFF1A3537),
+    tertiaryContainer = Color(0xFF2F5053),
+    onTertiaryContainer = DarkTextPrimary,
+    error = Color(0xFFF2B8B5),
     onError = Color(0xFF601410),
+    errorContainer = Color(0xFF8C2F2A),
+    onErrorContainer = Color(0xFFF2B8B5),
+    background = DarkBackground,
+    onBackground = DarkTextPrimary,
+    surface = DarkSurface,
+    onSurface = DarkTextPrimary,
+    surfaceVariant = Color(0xFF333333),
+    onSurfaceVariant = DarkTextSecondary,
+    outline = DarkBorder,
+    outlineVariant = Color(0xFF4A4A4A),
+    scrim = Color(0x52000000),
 )
 
-// Font size scale
-private val SmallTypography = Typography(
-    bodyLarge = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Normal),
-    titleLarge = TextStyle(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
-    labelLarge = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
-)
-
-private val NormalTypography = Typography(
-    bodyLarge = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Normal),
-    titleLarge = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
-    labelLarge = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium),
-)
-
-private val LargeTypography = Typography(
-    bodyLarge = TextStyle(fontSize = 18.sp, lineHeight = 26.sp, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Normal),
-    titleLarge = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 18.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium),
-    labelLarge = TextStyle(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium),
-)
-
-private val ExtraLargeTypography = Typography(
-    bodyLarge = TextStyle(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontSize = 18.sp, lineHeight = 26.sp, fontWeight = FontWeight.Normal),
-    titleLarge = TextStyle(fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
-    labelLarge = TextStyle(fontSize = 18.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium),
+private fun createTypographyScale(scale: Float = 1f) = Typography(
+    displayLarge = TextStyle(fontSize = (34 * scale).sp, lineHeight = (40 * scale).sp, fontWeight = FontWeight.Bold),
+    displayMedium = TextStyle(fontSize = (28 * scale).sp, lineHeight = (36 * scale).sp, fontWeight = FontWeight.Bold),
+    headlineLarge = TextStyle(fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold),
+    headlineMedium = TextStyle(fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold),
+    titleLarge = TextStyle(fontSize = (18 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium),
+    titleMedium = TextStyle(fontSize = (16 * scale).sp, lineHeight = (24 * scale).sp, fontWeight = FontWeight.Medium),
+    bodyLarge = TextStyle(fontSize = (16 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Normal),
+    bodyMedium = TextStyle(fontSize = (14 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.Normal),
+    bodySmall = TextStyle(fontSize = (13 * scale).sp, lineHeight = (18 * scale).sp, fontWeight = FontWeight.Normal),
+    labelLarge = TextStyle(fontSize = (14 * scale).sp, lineHeight = (20 * scale).sp, fontWeight = FontWeight.Medium),
+    labelMedium = TextStyle(fontSize = (12 * scale).sp, lineHeight = (16 * scale).sp, fontWeight = FontWeight.Medium),
+    labelSmall = TextStyle(fontSize = (11 * scale).sp, lineHeight = (14 * scale).sp, fontWeight = FontWeight.Medium),
 )
 
 private val LocalFontSize = staticCompositionLocalOf { FontSize.NORMAL }
@@ -92,25 +90,19 @@ private val LocalFontSize = staticCompositionLocalOf { FontSize.NORMAL }
 @Composable
 fun TikuTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     fontSize: FontSize = FontSize.NORMAL,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val colorScheme = if (darkTheme) WarmDarkColorScheme else WarmLightColorScheme
+
+    val scale = when (fontSize) {
+        FontSize.SMALL -> 0.875f
+        FontSize.NORMAL -> 1f
+        FontSize.LARGE -> 1.125f
+        FontSize.EXTRA_LARGE -> 1.25f
     }
 
-    val typography = when (fontSize) {
-        FontSize.SMALL -> SmallTypography
-        FontSize.NORMAL -> NormalTypography
-        FontSize.LARGE -> LargeTypography
-        FontSize.EXTRA_LARGE -> ExtraLargeTypography
-    }
+    val typography = createTypographyScale(scale)
 
     CompositionLocalProvider(LocalFontSize provides fontSize) {
         MaterialTheme(

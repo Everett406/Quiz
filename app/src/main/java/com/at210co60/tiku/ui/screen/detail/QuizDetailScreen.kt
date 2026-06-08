@@ -27,7 +27,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,12 +42,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.at210co60.tiku.data.model.BankStats
 import com.at210co60.tiku.data.repository.QuestionRepository
-
-// Card colors
-private val CardBlue = Color(0xFFE3F2FD)
-private val CardGreen = Color(0xFFE8F5E9)
-private val CardYellow = Color(0xFFFFF8E1)
-private val CardPink = Color(0xFFFCE4EC)
+import com.at210co60.tiku.ui.components.WarmTopBar
+import com.at210co60.tiku.ui.theme.AccentError
+import com.at210co60.tiku.ui.theme.AccentInfo
+import com.at210co60.tiku.ui.theme.AccentPrimary
+import com.at210co60.tiku.ui.theme.AccentSuccess
+import com.at210co60.tiku.ui.theme.Radius
+import com.at210co60.tiku.ui.theme.Spacing
+import com.at210co60.tiku.ui.theme.TextPrimary
+import com.at210co60.tiku.ui.theme.TextSecondary
+import com.at210co60.tiku.ui.theme.WarmWhite
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,84 +70,83 @@ fun QuizDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
+            WarmTopBar(
+                title = title,
+                onBack = onBack,
             )
         },
+        containerColor = WarmWhite,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = Spacing.lg)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // 功能入口卡片
+            Spacer(modifier = Modifier.height(Spacing.md))
+
+            // Action Cards Grid
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                FunctionCard(
+                WarmActionCard(
                     title = "顺序刷题",
                     subtitle = "按原题顺序系统学习",
                     icon = Icons.Default.Book,
-                    backgroundColor = CardBlue,
+                    accentColor = AccentPrimary,
                     onClick = { onNavigateToPractice("sequential") },
                     modifier = Modifier.weight(1f),
                 )
-                FunctionCard(
+                WarmActionCard(
                     title = "随机刷题",
                     subtitle = "打乱顺序模拟实战",
                     icon = Icons.Default.Casino,
-                    backgroundColor = CardGreen,
+                    accentColor = AccentSuccess,
                     onClick = { onNavigateToPractice("random") },
                     modifier = Modifier.weight(1f),
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.md))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                FunctionCard(
+                WarmActionCard(
                     title = "模拟考试",
                     subtitle = "自定义题数·80分及格",
                     icon = Icons.Default.EditNote,
-                    backgroundColor = CardYellow,
+                    accentColor = AccentInfo,
                     onClick = { onNavigateToPractice("exam") },
                     modifier = Modifier.weight(1f),
                 )
-                FunctionCard(
+                WarmActionCard(
                     title = "错题本",
                     subtitle = "针对薄弱点重点突破",
                     icon = Icons.Default.ErrorOutline,
-                    backgroundColor = CardPink,
+                    accentColor = AccentError,
                     onClick = { onNavigateToPractice("wrong") },
                     modifier = Modifier.weight(1f),
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
-            // 底部统计看板
-            StatsCard(stats = stats)
+            // Stats Card
+            WarmStatsCard(stats = stats)
         }
     }
 }
 
 @Composable
-private fun FunctionCard(
+private fun WarmActionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    backgroundColor: Color,
+    accentColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,34 +154,35 @@ private fun FunctionCard(
         modifier = modifier
             .height(120.dp)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(Radius.md),
+        colors = CardDefaults.cardColors(containerColor = accentColor.copy(alpha = 0.1f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(Spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp),
+                tint = accentColor,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.sm))
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
                 textAlign = TextAlign.Center,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextSecondary,
                 textAlign = TextAlign.Center,
             )
         }
@@ -187,61 +190,83 @@ private fun FunctionCard(
 }
 
 @Composable
-private fun StatsCard(stats: BankStats?) {
+private fun WarmStatsCard(stats: BankStats?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Radius.md),
+        colors = CardDefaults.cardColors(containerColor = WarmWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp),
+                .padding(Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "共 ${stats?.totalQuestions ?: 0} 题",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "${stats?.totalQuestions ?: 0} 题",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
             )
             if ((stats?.wrongAnswers ?: 0) > 0) {
+                Spacer(modifier = Modifier.height(Spacing.xs))
                 Text(
                     text = "已收录 ${stats?.wrongAnswers} 道错题",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = AccentError,
                 )
             }
         }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = Spacing.md)
+                .padding(bottom = Spacing.lg),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            StatItem(value = "${stats?.answeredQuestions ?: 0}", label = "已做题")
-            StatItem(value = "${stats?.correctRate ?: 0}%", label = "正确率")
-            StatItem(value = "${stats?.wrongAnswers ?: 0}", label = "错题")
-            StatItem(
+            WarmStatItem(
+                value = "${stats?.answeredQuestions ?: 0}",
+                label = "已做题",
+                accentColor = AccentPrimary,
+            )
+            WarmStatItem(
+                value = "${stats?.correctRate ?: 0}%",
+                label = "正确率",
+                accentColor = AccentSuccess,
+            )
+            WarmStatItem(
+                value = "${stats?.wrongAnswers ?: 0}",
+                label = "错题",
+                accentColor = AccentError,
+            )
+            WarmStatItem(
                 value = if ((stats?.answeredQuestions ?: 0) >= 5 && (stats?.correctRate ?: 0) >= 80) "通过" else "--",
-                label = "考试通过"
+                label = "考试",
+                accentColor = AccentInfo,
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-private fun StatItem(value: String, label: String) {
+private fun WarmStatItem(
+    value: String,
+    label: String,
+    accentColor: Color,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = accentColor,
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TextSecondary,
         )
     }
 }

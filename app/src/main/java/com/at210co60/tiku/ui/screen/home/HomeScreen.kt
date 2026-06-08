@@ -17,10 +17,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -29,10 +29,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +45,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.at210co60.tiku.data.model.QuestionBank
 import com.at210co60.tiku.data.repository.QuestionRepository
+import com.at210co60.tiku.ui.components.WarmButton
+import com.at210co60.tiku.ui.components.WarmEmptyState
+import com.at210co60.tiku.ui.components.WarmSecondaryButton
+import com.at210co60.tiku.ui.components.WarmTopBar
+import com.at210co60.tiku.ui.theme.AccentPrimary
+import com.at210co60.tiku.ui.theme.Radius
+import com.at210co60.tiku.ui.theme.Spacing
+import com.at210co60.tiku.ui.theme.Surface
+import com.at210co60.tiku.ui.theme.TextPrimary
+import com.at210co60.tiku.ui.theme.TextSecondary
+import com.at210co60.tiku.ui.theme.WarmCream
+import com.at210co60.tiku.ui.theme.WarmWhite
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,31 +72,33 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = "Tiku", fontWeight = FontWeight.Bold)
-                },
+            WarmTopBar(
+                title = "题库",
+                onBack = null,
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "设置")
+                        Icon(Icons.Default.Settings, contentDescription = "设置", tint = TextPrimary)
                     }
                 },
             )
         },
+        containerColor = WarmWhite,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = Spacing.lg),
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.md))
 
+            // Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                Button(
+                WarmButton(
+                    text = "加载示例",
                     onClick = {
                         scope.launch {
                             val bankId = repository.insertQuestionBank(
@@ -117,21 +129,18 @@ fun HomeScreen(
                         }
                     },
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("加载示例")
-                }
-                OutlinedButton(
+                    icon = Icons.Default.Add,
+                )
+                WarmSecondaryButton(
+                    text = "从文件导入",
                     onClick = { /* TODO: 从文件导入题库 */ },
                     enabled = false,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text("从文件导入")
-                }
+                    icon = Icons.Default.Description,
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             if (questionBanks.isEmpty()) {
                 Box(
@@ -140,31 +149,15 @@ fun HomeScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.LibraryBooks,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "暂无题库",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "点击上方「加载示例」按钮\n加载内置示例题库",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    WarmEmptyState(
+                        icon = Icons.Default.LibraryBooks,
+                        title = "暂无题库",
+                        subtitle = "点击上方「加载示例」按钮\n加载内置示例题库",
+                    )
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
                     items(questionBanks, key = { it.id }) { bank ->
                         QuestionBankCard(
@@ -195,13 +188,14 @@ private fun QuestionBankCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Radius.md),
+        colors = CardDefaults.cardColors(containerColor = Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.md),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -210,18 +204,19 @@ private fun QuestionBankCard(
                     text = questionBank.name + if (questionBank.isDefault) "（默认）" else "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.xs))
                 Text(
                     text = "${questionBank.questionCount} 题",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = TextSecondary,
                 )
             }
 
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "更多")
+                    Icon(Icons.Default.MoreVert, contentDescription = "更多", tint = TextSecondary)
                 }
                 DropdownMenu(
                     expanded = showMenu,
