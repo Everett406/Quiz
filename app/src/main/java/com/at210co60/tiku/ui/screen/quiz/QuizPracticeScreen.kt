@@ -424,7 +424,7 @@ private fun QuizOptionItem(
             width = if (isSelected || isCorrect || isWrong) 1.5.dp else 1.dp,
             color = borderColor,
         ),
-        onClick = if (isEnabled) onClick else null,
+        onClick = { if (isEnabled) onClick() },
     ) {
         Row(
             modifier = Modifier

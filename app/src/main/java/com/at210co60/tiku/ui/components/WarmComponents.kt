@@ -182,17 +182,14 @@ fun WarmOptionCard(
 
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(Radius.md))
-            .then(
-                if (onClick != null) Modifier else Modifier
-            ),
+            .clip(RoundedCornerShape(Radius.md)),
         shape = RoundedCornerShape(Radius.md),
         color = backgroundColor,
         border = BorderStroke(
             width = if (isSelected || isCorrect || isWrong) 1.5.dp else 1.dp,
             color = borderColor,
         ),
-        onClick = if (isEnabled && onClick != null) onClick else null,
+        onClick = { if (isEnabled) onClick() },
     ) {
         Row(
             modifier = Modifier
